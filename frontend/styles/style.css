@@ -1,0 +1,44 @@
+.parameters {
+	width: 80%;
+	margin: 70px;
+	margin-bottom: 30px;
+	display: flex;
+}
+
+.parameters .column {
+	width: 300px;
+	margin-right: 40px;
+}
+
+.parameters .control {
+	margin-bottom: 20px;
+}
+
+.parameters .control.runbutton {
+	padding-top: 24px;
+}
+
+.parameters .control.runbutton .glyphicon {
+	font-size: 24px;
+	margin-left: 50px;
+	height: 37px;
+	top: 5px;
+}
+
+.parameters .control.runbutton .glyphicon-ok {
+	color: green;
+}
+
+.parameters .control.runbutton .glyphicon-remove {
+	color: red;
+}
+
+.parameters .control input[type="text"] {
+	display: inline-block;
+}
+
+#chartdiv {
+	width: calc(80% - 10px);
+	height: 600px;
+	display: inline-block;
+}

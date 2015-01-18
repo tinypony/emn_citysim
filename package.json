@@ -1,0 +1,18 @@
+{
+  "name": "emn_citysim",
+  "version": "0.0.1",
+  "description": "Citywide electric bus simulation",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tinypony/emn_citysim.git"
+  },
+  "author": "Artur Latypov",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/tinypony/emn_citysim/issues"
+  }
+}
