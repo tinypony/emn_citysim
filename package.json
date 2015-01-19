@@ -14,5 +14,10 @@
   "license": "BSD-2-Clause",
   "bugs": {
     "url": "https://github.com/tinypony/emn_citysim/issues"
+  },
+  "dependencies": {
+    "express": "~4.11.0",
+    "mongoose": "~3.8.21",
+    "underscore": "~1.7.0"
   }
 }

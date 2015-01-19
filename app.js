@@ -1,26 +1,28 @@
-var express = require('express')
-  , http = require('http')
-  , path = require('path');
+var express = require('express'), 
+  http = require('http'), 
+  path = require('path');
 
-
-
+var models = require('./backend/models');
+var simulate = require('./backend/views/simulate');
 var app = express();
-
+var bodyParse = require('body-parser');
+var methodOverride = require('method-override');
+var errorhandler = require('errorhandler');
 
 // all environments
 app.set('port', process.env.PORT || 3000);
 
-//app.set('views', __dirname + '/views');
 app.set('view engine', 'jade');
-app.use(express.logger('dev'));
-app.use(express.bodyParser());
-app.use(express.methodOverride());
-app.use(app.router);
+app.use(bodyParse.json());
+app.use(methodOverride());
+
 app.use('/', express.static(__dirname + '/frontend'));
+
+app.use('/api/simulate', simulate.list);
 
 // development only
 if ('development' == app.get('env')) {
-  app.use(express.errorHandler());
+  app.use(errorhandler());
 }
 
 
