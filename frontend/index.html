@@ -2,6 +2,9 @@
 <head>
 <link rel="stylesheet" type="text/css" href="styles/style.css"
 	media="all">
+<link href='http://fonts.googleapis.com/css?family=Raleway:400,300'
+	rel='stylesheet' type='text/css'>
+	<link href='http://fonts.googleapis.com/css?family=Raleway:400,300|Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
 <link rel="stylesheet"
 	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
 <link rel="stylesheet" type="text/css" href="styles/jquery-ui.css"
@@ -9,74 +12,6 @@
 <script data-main="main" src="lib/require.js"></script>
 </head>
 <body>
-	<div class="parameters">
-		<div class="column">
-			<div class="control">
-				<label>Battery capacity, kWh</label>
-				<div class="wrapper">
-					<div id="capacity-slider"></div>
-				</div>
-				<label id="capacity"></label>
-			</div>
-			<div class="control">
-				<label>Energy consumption (mean, standard deviation)</label>
-				<div class="input-group">
-					<input id="consumption" class="form-control" placeholder="Enter energy consumption mean" type="text" />
-					<span class="input-group-addon">kWh/km</span>
-					
-					<input id="consumptionStd" class="form-control" placeholder="Std" type="text" />
-					<span class="input-group-addon">kWh/km</span>
-				</div>
-			</div>
-		</div>
-		<div class="column">
-			<div class="control">
-				<label>Charging power, kW</label>
-				<div class="wrapper">
-					<div id="charging-power-slider"></div>
-				</div>
-				<label id="charging-power"></label>
-			</div>
-			<div class="control">
-				<label class="">Total traveled distance, km</label>
 
-				<div class="wrapper">
-					<div id="total-distance-slider"></div>
-				</div>
-				<label id="total-distance"></label>
-			</div>
-
-		</div>
-		
-		<div class="column">
-			<div class="control">
-				<label>Charging interval, km</label>
-				<div class="wrapper">
-					<div id="charging-interval-slider"></div>
-				</div>
-				<label id="charging-interval"></label>
-			</div>
-			
-			<div class="control">
-				<label>Charging time (mean, standard deviation)</label>
-				<div class="input-group">
-					<input id="charging-time" class="form-control"
-						placeholder="Enter the duration of charging in seconds" type="text" />
-					<span class="input-group-addon">sec</span>
-					<input id="charging-time-std" class="form-control"
-						placeholder="Std" type="text" />
-					<span class="input-group-addon">sec</span>
-				</div>
-			</div>
-		</div>
-
-		<div class="column">
-			<div class="control runbutton">
-				<button type="button" class="btn btn-primary">Run simulation</button>
-				<span class="glyphicon"></span>
-			</div>
-		</div>
-	</div>
-	<div id="chartdiv" class="chartdiv"></div>
 </body>
 </html>

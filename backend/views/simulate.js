@@ -1,37 +1,67 @@
 var _ = require('underscore');
 var mongoose = require('mongoose');
-var Bus = mongoose.model('BusService');
 var MongoClient = require('mongodb').MongoClient;
 var moment = require('moment');
 
-var getDate = function(req) {
+function getDate(req) {
   return "2014-12-17";
 }
 
-var getTotalEnergy = function(buses) {
-  return kilometersTotal(buses) * getEnergyConsumptionPerKm();
+function getTotalEnergy(buses, req) {
+  return kilometersTotal(buses) * getEnergyConsumptionPerKm(req);
 }
 
-var kilometersTotal = function(buses) {
+function kilometersTotal(buses) {
   return _.reduce(buses, function(total, bus) {
     return total + bus.routeLength / 1000;
   }, 0);
 }
 
 function getEnergyConsumptionPerKm(req) {
-  return 1.1;
+  return req.query.consumptionPerKm ? parseFloat(req.query.consumptionPerKm, 10) : 1;
 }
 
 function getEfficiency(req) {
-  return 1;
+  return req.query.efficiency ? parseFloat(req.query.efficiency, 10) : 1;
 }
 
 function getElectrificationPercentage(req) {
   return 0.5;
 }
 
+/**
+ * Returns stripped route number e.g. 102T will return 102.
+ * This is based on assumption that routes ending with a letter are just modifications
+ * of the base routes and buses can switch between them at the end stops.
+ * 
+ * @param {Object} bus - a single bus service 
+ * @returns
+ */
+function getRoute(bus) {
+  var fullRoute = bus.route;
+  return fullRoute.replace(/\D+/g, '');
+}
+
+/**
+ * 
+ * @param {Number} power - power draw in kW
+ * @param {Number} time - charging time
+ * @returns {Number} - energy consumed in kWh
+ */
+function getEnergyDrawn(power, time) {
+  return power * (time/60); 
+}
+
+/**
+ * Returns a map of all end stops for all routes
+ * 
+ * @param buses -
+ *          all bus services on the specified day
+ * @returns {Object} - map of all end stops
+ */
 function extractEndStops(buses) {
   var retval = {};
+
   _.each(buses, function(bus) {
     var firstStop = _.first(bus.stops);
     var lastStop = _.last(bus.stops);
@@ -48,27 +78,71 @@ function extractEndStops(buses) {
   return retval;
 }
 
+/**
+ * Tells if a bus of certain route is already waiting at its end stop
+ * 
+ * @param {Object}
+ *          endStops - map of all end stops, used to keep track of waiting buses
+ * @param {Object}
+ *          bus - object representing a single bus trip
+ * @returns {String} - string representation of the time a bus of the same route
+ *          arrived at that end stop or undefined if no buses arrived yet
+ */
 function waitingSince(endStops, bus) {
   var firstStop = _.first(bus.stops);
-  var stopMap = endStops[firstStop];
+  var stopMap = endStops[firstStop.id];
+  var route = getRoute(bus);
+  var busQueue = stopMap[route];
 
-  if (stopMap[bus.route] && stopMap[bus.route].length) {
-    return stopMap[bus.route].unshift();
+  if (busQueue && busQueue.length) {
+    var firstDepartureInQueue = _.min(busQueue, function(time) {
+      return parseInt(time, 10);
+    });
+    
+    var busDeparture = moment(firstStop.time, 'HHmm');
+
+    // Check if buses at the end stop are not from the future :)
+    if (busDeparture.diff(moment(firstDepartureInQueue, 'HHmm'), 'minutes') < 1) {
+      return undefined;
+    } else {
+      stopMap[route] = _.without(busQueue, firstDepartureInQueue);
+      return firstDepartureInQueue;
+    }
   } else {
     return undefined;
   }
 }
 
+/**
+ * Mark bus as processed and let it wait at the last stop
+ * 
+ * @param {Object}
+ *          endStops - map of all end stops, used to keep track of waiting buses
+ * @param {Object}
+ *          bus - object representing a single bus trip
+ */
 function travelRoute(endStops, bus) {
   var lastStop = _.last(bus.stops);
-  var stopMap = endStops[lastStop];
+  var stopMap = endStops[lastStop.id];
 
-  if (!stopMap[bus.route]) {
-    stopMap[bus.route] = [];
+  var route = getRoute(bus);
+  
+  if (!stopMap[route]) {
+    stopMap[route] = [];
   }
-  stopMap[bus.route].push(lastStop.time);
+  
+  stopMap[route].push(lastStop.time);
 }
 
+/**
+ * Return time difference in minutes between now and then
+ * 
+ * @param {String}
+ *          now - current moment in HHmm format
+ * @param {String}
+ *          then - moment in past in HHmm format
+ * @returns {Number} amount of minutes between two moments
+ */
 function getTimeDifference(now, then) {
   var nowMoment = moment(now, 'HHmm');
   var thenMoment = moment(then, 'HHmm');
@@ -90,13 +164,10 @@ function getTimeDifference(now, then) {
  * @param {Number}
  *          [params.efficiency] - specifies charger's efficiency
  * 
- * @returns {Number}
+ * @returns {Number} - power in kW needed to charge the bus for the next trip in
+ *          available period of time
  */
 function powerNeeded(params) {
-  params = _.defaults(params, {
-    consumption : 1,
-    efficiency : 1
-  });
 
   var intakePower = (params.consumption * params.length) / (params.chargingTime / 60);
   var powerDraw = intakePower / params.efficiency;
@@ -123,12 +194,14 @@ function powerNeeded(params) {
  *          params.now - current moment
  * @param {Object}
  *          req - rest request object
+ * @returns {Number} energy drawn from the grid
  */
 function handleWaitingBus(params, req) {
   var difference = getTimeDifference(params.now, params.then);
+
   var power = powerNeeded({
-    consumption : getConsumption(req),
-    length : params.bus.routeLength,
+    consumption : getEnergyConsumptionPerKm(req),
+    length : params.bus.routeLength / 1000, // convert from meters to km
     chargingTime : difference,
     efficiency : getEfficiency(req)
   });
@@ -140,8 +213,18 @@ function handleWaitingBus(params, req) {
     var timeStr = thenMoment.format('HHmm');
     params.timeseries[timeStr] = params.timeseries[timeStr] + power;
   }
+  
+  return getEnergyDrawn(power, difference);
 }
 
+exports.getTimeDifference = getTimeDifference;
+exports.waitingSince = waitingSince;
+exports.powerNeeded = powerNeeded;
+exports.getRoute = getRoute;
+exports.getEnergyDrawn = getEnergyDrawn;
+/**
+ * REST end point for running the simulation of city-wide bus traffic 
+ */
 exports.list = function(req, res) {
   MongoClient.connect("mongodb://localhost:27017/hsl", function(err, db) {
     if (!err) {
@@ -149,45 +232,59 @@ exports.list = function(req, res) {
         dates : getDate(req)
       });
 
+      console.log(req.query);
+      
       busesToday.toArray(function(err, buses) {
         var timeseries = {};
+        var busesTotal = buses.length;
         var endStops = extractEndStops(buses);
-        var totalEnergy = 0;
+        
         var moreTime = true;
         var time = moment('00:00', 'HH:mm');
+        var totalEnergyDrawn = 0;
+        
+        var sendResponseAndCloseDB = function() {
+          res.type('application/json');
+          res.send({
+            totalEnergy : totalEnergyDrawn + " kWh",
+            timeseries : timeseries
+          });
+
+          db.close();
+        };
+
+        var finalCallback = _.after(busesTotal, sendResponseAndCloseDB);
 
         while (moreTime) {
-
           var minuteStr = time.format('HHmm');
 
           if (!timeseries[minuteStr]) {
             timeseries[minuteStr] = 0;
           }
 
-          // Find all buses leaving now
-          db.collection('buses').find({
-            dates : getDate(req),
-            'stops.0.time' : minuteStr
-          }).toArray(function(err, busesNow){
-            // Iterate over the buses and check if they have been charging
-            _.each(busesNow, function(busNow) {
-              var waitingStart = waitingSince(endStops, busNow);
-
-              if (waitingStart) {
-                handleWaitingBus({
-                  endStops : endStops,
-                  bus : busNow,
-                  timeseries : timeseries,
-                  waitingStarted : waitingStart,
-                  now : minuteStr
-                }, req);
-              }
-
-              travelRoute(endStops, bus);
-            });
+          // buses leaving at this moment
+          var busesNow = _.filter(buses, function(bus) {
+            return _.first(bus.stops).time === minuteStr;
           });
 
-         
+          _.each(busesNow, function(busNow) {
+            var waitingStart = waitingSince(endStops, busNow);
+
+            if (waitingStart) {
+              totalEnergyDrawn += handleWaitingBus({
+                endStops : endStops,
+                bus : busNow,
+                timeseries : timeseries,
+                then : waitingStart,
+                now : minuteStr
+              }, req);
+            } else {
+              totalEnergyDrawn += getEnergyConsumptionPerKm(req) * busNow.routeLength/1000;
+            }
+
+            travelRoute(endStops, busNow);
+            finalCallback();
+          });
 
           time.add(1, 'minutes');
           if (time.format('HHmm') === '0000') {
@@ -195,13 +292,7 @@ exports.list = function(req, res) {
           }
         }
 
-        res.type('application/json');
-        res.send({
-          totalEnergy: getTotalEnergy(buses) + " kWh",
-          timeseries: timeseries 
-        });
-
-        db.close();
+        sendResponseAndCloseDB();
       });
     }
   });
