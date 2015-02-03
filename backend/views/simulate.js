@@ -1,5 +1,4 @@
 var _ = require('underscore');
-var mongoose = require('mongoose');
 var MongoClient = require('mongodb').MongoClient;
 var moment = require('moment');
 
@@ -238,10 +237,20 @@ exports.list = function(req, res) {
         var timeseries = {};
         var busesTotal = buses.length;
         var endStops = extractEndStops(buses);
-        
+        var busLookUp = {};
         var moreTime = true;
         var time = moment('00:00', 'HH:mm');
         var totalEnergyDrawn = 0;
+        
+        _.each(buses, function(bus) {
+          var departure = _.first(bus.stops).time;
+          
+          if( !busLookUp[departure] ) {
+            busLookUp[departure] = [];
+          }
+          
+          busLookUp[departure].push(bus);
+        });
         
         var sendResponseAndCloseDB = function() {
           res.type('application/json');
@@ -263,9 +272,7 @@ exports.list = function(req, res) {
           }
 
           // buses leaving at this moment
-          var busesNow = _.filter(buses, function(bus) {
-            return _.first(bus.stops).time === minuteStr;
-          });
+          var busesNow = busLookUp[minuteStr];
 
           _.each(busesNow, function(busNow) {
             var waitingStart = waitingSince(endStops, busNow);
