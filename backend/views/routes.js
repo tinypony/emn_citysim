@@ -22,6 +22,9 @@ exports.routes = function(req, res) {
                                         {
                                           $group: {
                                             _id: '$serviceNbr',
+                                            route: {
+                                              $first: '$route'
+                                            },
                                             routeLength: {
                                               $first: '$routeLength'
                                             }

@@ -37,7 +37,17 @@
 	display: inline-block;
 }
 
+.statistics {
+	margin-left: 70px;
+}
+
 #chartdiv {
+	width: calc(80% - 10px);
+	height: 600px;
+	display: inline-block;
+}
+
+#route-diagram {
 	width: calc(80% - 10px);
 	height: 600px;
 	display: inline-block;

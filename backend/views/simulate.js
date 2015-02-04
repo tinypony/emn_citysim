@@ -28,6 +28,10 @@ function getElectrificationPercentage(req) {
   return 0.5;
 }
 
+function getMaxLength(req) {
+  return req.query.maxLength ? req.query.maxLength : 15000; 
+}
+
 /**
  * Returns stripped route number e.g. 102T will return 102.
  * This is based on assumption that routes ending with a letter are just modifications
@@ -228,12 +232,13 @@ exports.list = function(req, res) {
   MongoClient.connect("mongodb://localhost:27017/hsl", function(err, db) {
     if (!err) {
       var busesToday = db.collection('buses').find({
-        dates : getDate(req)
+        dates : getDate(req),
+        routeLength : { $lt : parseInt(getMaxLength(req), 10) }
       });
 
-      console.log(req.query);
       
       busesToday.toArray(function(err, buses) {
+        console.log(buses.length);
         var timeseries = {};
         var busesTotal = buses.length;
         var endStops = extractEndStops(buses);
@@ -256,6 +261,9 @@ exports.list = function(req, res) {
           res.type('application/json');
           res.send({
             totalEnergy : totalEnergyDrawn + " kWh",
+            max: _.max(_.values(timeseries), function(power){
+              return power;
+            }),
             timeseries : timeseries
           });
 
