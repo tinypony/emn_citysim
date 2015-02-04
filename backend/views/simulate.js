@@ -74,6 +74,7 @@ function extractEndStops(buses) {
 
     if (!retval[firstStop.id]) {
       retval[firstStop.id] = {
+          id: firstStop.id,
           name: firstStop.name,
           total: 0,
           timeseries: {}
@@ -82,6 +83,7 @@ function extractEndStops(buses) {
 
     if (!retval[lastStop.id]) {
       retval[lastStop.id] = {
+          id: lastStop.id,
           name: lastStop.name,
           total: 0,
           timeseries: {}
@@ -244,6 +246,7 @@ function handleWaitingBus(params, req) {
     }
     
     stopMap.timeseries[timeStr] += power;
+    stopMap.total += power;
   }
   
   return getEnergyDrawn(power, difference);
@@ -254,6 +257,36 @@ exports.waitingSince = waitingSince;
 exports.powerNeeded = powerNeeded;
 exports.getRoute = getRoute;
 exports.getEnergyDrawn = getEnergyDrawn;
+
+function processStops(stops) {
+  //get array of stops
+  var retval = _.values(stops);
+  
+  //drop stops that have consumption below threshold
+  retval = _.filter(retval, function(stop) {
+    return stop.total > 1;
+  });
+  
+  //round consumption
+  retval = _.map(retval, function(stop){
+    stop.total = Math.round(stop.total);
+    stop.timeseries = _.map(stop.timeseries, function(val, key) {
+      return {
+        time: key,
+        power: val
+      };
+    });
+    return stop;
+  });
+  
+  //sort in descending order by totl consumption
+  retval = _.sortBy(retval, function(stop) {
+    return -stop.total;
+  });
+  
+  return retval;
+};
+
 /**
  * REST end point for running the simulation of city-wide bus traffic 
  */
@@ -294,7 +327,7 @@ exports.list = function(req, res) {
               return power;
             }),
             timeseries : timeseries,
-            endStops: endStops
+            endStops: processStops(endStops)
           });
 
           db.close();

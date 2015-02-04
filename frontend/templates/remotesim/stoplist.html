@@ -1,8 +1,11 @@
-<ul>
+
+<div class="stoplist">
 	{{#each stops}}
-		<li id="{{this.id}}">
-			<span class="stop=name">{{this.name}}</span>
-			<span class="stop-consuption-total">{{this.total}}</span>
-		</li>
+		<div data-id={{this.id}} class="stop">
+			<span class="stop-name">{{this.name}}</span>
+			<span class="stop-consumption-total">{{this.total}}</span>
+		</div>
 	{{/each}}
-</ul>
+</div>
+
+<div id="stopchart" class="stopchart"></div>
