@@ -8,7 +8,6 @@ define([ 'jquery',
 
   var RemoteSimulation = Backbone.View.extend({
 
-
     initialize : function(options) {
       _.bindAll(this, [ 'runSimulation' ]);
       this.simulationParams = {

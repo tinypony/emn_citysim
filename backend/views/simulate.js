@@ -42,7 +42,7 @@ function getMaxLength(req) {
  */
 function getRoute(bus) {
   var fullRoute = bus.route;
-  return fullRoute.replace(/\D+/g, '');
+  return fullRoute.replace(/T|B|K|V/g, '');
 }
 
 /**
@@ -62,6 +62,9 @@ function getEnergyDrawn(power, time) {
  *          all bus services on the specified day
  * @returns {Object} - map of all end stops
  */
+//TODO: Some routes end on one stop, but start from another with different id. Must find a way to 
+//combine these stops into single one to avoid confusion.
+//FIXME: Can use stop name to find matching endStops
 function extractEndStops(buses) {
   var retval = {};
 
@@ -70,15 +73,37 @@ function extractEndStops(buses) {
     var lastStop = _.last(bus.stops);
 
     if (!retval[firstStop.id]) {
-      retval[firstStop.id] = {};
+      retval[firstStop.id] = {
+          name: firstStop.name,
+          total: 0,
+          timeseries: {}
+      };
     }
 
     if (!retval[lastStop.id]) {
-      retval[lastStop.id] = {};
+      retval[lastStop.id] = {
+          name: lastStop.name,
+          total: 0,
+          timeseries: {}
+      };
     }
   });
 
   return retval;
+}
+
+function getFirstStop(endStops, bus) {
+  var firstStop = _.first(bus.stops);
+  return endStops[firstStop.id];
+}
+
+function getDeparture(bus, isMoment) {
+  var departure = _.first(bus.stops).time;
+  if(isMoment) {
+    return moment(departure, 'HHmm');
+  } else {
+    return departure;
+  }
 }
 
 /**
@@ -92,8 +117,7 @@ function extractEndStops(buses) {
  *          arrived at that end stop or undefined if no buses arrived yet
  */
 function waitingSince(endStops, bus) {
-  var firstStop = _.first(bus.stops);
-  var stopMap = endStops[firstStop.id];
+  var stopMap = getFirstStop(endStops, bus);
   var route = getRoute(bus);
   var busQueue = stopMap[route];
 
@@ -102,10 +126,8 @@ function waitingSince(endStops, bus) {
       return parseInt(time, 10);
     });
     
-    var busDeparture = moment(firstStop.time, 'HHmm');
-
     // Check if buses at the end stop are not from the future :)
-    if (busDeparture.diff(moment(firstDepartureInQueue, 'HHmm'), 'minutes') < 1) {
+    if (getDeparture(bus, true).diff(moment(firstDepartureInQueue, 'HHmm'), 'minutes') < 1) {
       return undefined;
     } else {
       stopMap[route] = _.without(busQueue, firstDepartureInQueue);
@@ -214,7 +236,14 @@ function handleWaitingBus(params, req) {
   for (var i = 0; i < difference; i++) {
     thenMoment.add(i, 'minutes');
     var timeStr = thenMoment.format('HHmm');
-    params.timeseries[timeStr] = params.timeseries[timeStr] + power;
+    params.timeseries[timeStr] += power;
+    
+    var stopMap = getFirstStop(params.endStops, params.bus);
+    if(!stopMap.timeseries[timeStr]) {
+      stopMap.timeseries[timeStr] = 0;
+    }
+    
+    stopMap.timeseries[timeStr] += power;
   }
   
   return getEnergyDrawn(power, difference);
@@ -264,7 +293,8 @@ exports.list = function(req, res) {
             max: _.max(_.values(timeseries), function(power){
               return power;
             }),
-            timeseries : timeseries
+            timeseries : timeseries,
+            endStops: endStops
           });
 
           db.close();

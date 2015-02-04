@@ -11,7 +11,7 @@ describe('Simulate', function() {
 
   it('Maps modified routes to the base routes', function() {
     expect(simulate.getRoute({route: '102T'})).toBe('102');
-    expect(simulate.getRoute({route: '102KV'})).toBe('102');
+    expect(simulate.getRoute({route: '102KV'})).toBe('102KV');
     expect(simulate.getRoute({route: '102'})).toBe('102');
   });
 
