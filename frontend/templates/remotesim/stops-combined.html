@@ -1,0 +1,21 @@
+<h2>Selected stops combined</h2>
+<div class="combinedchart"></div>
+<div class="routes-outcome">
+	<div class="electrified-routes">
+		<h3>Electrified routes</h3>
+		<ul>
+			{{#each elroutes}}
+				<li class="available">{{this}}</li>
+			{{/each}}
+		</ul>
+	</div>
+	
+	<div class="potential-routes">
+		<h3>Half way there</h3>
+		<ul>
+			{{#each routes}}
+				<li>{{this}}</li>
+			{{/each}}
+		</ul>
+	</div>
+</div>

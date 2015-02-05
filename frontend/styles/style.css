@@ -43,6 +43,11 @@
 
 .statistics {
 	margin-left: 70px;
+	display: flex;
+}
+
+.statistics .column {
+	margin-right: 15px;
 }
 
 .stopdata {
@@ -54,6 +59,18 @@
 	display: table
 }
 
+.stopdata .stoplist .list-header {
+	display: table-header-group;
+}
+
+.stopdata .stoplist .list-header label{
+	display: table-cell;
+}
+
+.stopdata .stoplist .list-header label:nth-child(4){
+	padding-left: 10px;
+}
+
 .header {
 	margin-left: 70px;
 }
@@ -61,6 +78,7 @@
 .stopdata .stoplist .stop {
 	display: table-row;
 	cursor: pointer;
+	position: relative;
 }
 
 .stopdata .stoplist .stop.active {
@@ -76,13 +94,55 @@
 	padding: 3px 0px;
 }
 
-.stopdata .stoplist .stop > .stop-consumption-total {
+.stopdata .stoplist .stop > input
+{
+	position: relative;
+	top: 2px;
+}
+
+.stopdata .stoplist .stop > .stop-name {
 	padding-left: 10px;
 }
 
-#stopchart {
+.stopdata .stoplist .stop > .stop-consumption-total,
+.stopdata .stoplist .stop > .stop-routes-total {
+	text-align: right;
+}
+
+.charts {
 	width: calc(80% - 10px);
+}
+
+.charts .stop-stats,
+.charts .combined {
+	padding-left: 70px;
+}
+
+.charts .combined li.available {
+	font-weight: 600;
+}
+
+.charts .combined .routes-outcome {
+	display: flex;
+}
+
+.charts .combined .routes-outcome > * {
+	margin-right: 25px;
+}
+
+.charts .combined .routes-outcome > .potential-routes > ul {
+	color: #999;
+}
+
+#stop-powerchart {
+	width: 100%;
 	height: 600px;
+	display: inline-block;
+}
+
+#stop-buschart {
+	width: 100%;
+	height: 300px;
 	display: inline-block;
 }
 

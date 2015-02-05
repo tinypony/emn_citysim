@@ -1,11 +1,23 @@
-
 <div class="stoplist">
+	<div class="list-header">
+		<label></label>
+		<label>Stop name</label>
+		<label>Eng (kWh)</label>
+		<label>Routes</label>
+	</div>
 	{{#each stops}}
+		
 		<div data-id={{this.id}} class="stop">
+			<input class="include-stop" type="checkbox"/>
 			<span class="stop-name">{{this.name}}</span>
 			<span class="stop-consumption-total">{{this.total}}</span>
+			<span class="stop-routes-total">{{this.leavingRoutes.length}}</span>
 		</div>
 	{{/each}}
 </div>
 
-<div id="stopchart" class="stopchart"></div>
+<div class="charts">
+	<div id="stop-powerchart" class="stop-powerchart"></div>
+	<div class="stop-stats"></div>
+	<div class="combined"></div>
+</div>

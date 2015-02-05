@@ -46,7 +46,9 @@ define([ 'jquery',
         };
       });
       
-      this.$('.energy-total').text(data.totalEnergy);
+      this.$('.charge-energy').text(data.chargeEnergy);
+      this.$('.precharge-energy').text(data.prechargeEnergy);
+      
       timeseries = _.sortBy(timeseries, 'time');
       
       var chart = amRef.makeChart('chartdiv', {
