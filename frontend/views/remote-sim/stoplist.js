@@ -8,6 +8,10 @@ define([ 'jquery',
          'hbs!templates/remotesim/stops-combined'], 
          function($, JUI, _, amRef, Backbone,   StopListTemplate, RouteListTemplate, StopsCombined) {
 
+  /**
+   * Lists all the end stops
+   * and shows per stop info on energy consumption
+   */
   var StopList = Backbone.View
       .extend({
 
@@ -44,29 +48,51 @@ define([ 'jquery',
         
         showSingleStop: function(stopId) {
           var busstop = this.getStop(stopId)
-          var timeseries = busstop.timeseries;
+          var timeseries = _.values(busstop.timeseries);
           timeseries = _.sortBy(timeseries, 'time');
-          this.showPower(timeseries);
-          this.shoRoutes(busstop);
+          this.showPower(timeseries, 'stop-powerchart', 1100);
+          this.showRoutes(busstop);
         },
         
         includeStop: function(stopId, included) {
           if(included) {
             this.includedStops.push(stopId);
-            this.showCombined();
           }
           else {
             this.includedStops = _.without(this.includedStops, stopId);
           }
           
-          console.log(this.includedStops);
+          this.showCombined();
+        },
+        
+        _combineTimeseries: function(stops) {
+          var combinedTs = {};
+         
+          _.each(stops, function(stop){
+           
+            _.each(stop.timeseries, function(val, key) {
+              
+              if(!combinedTs[key]) {
+                combinedTs[key] = {
+                    time: key,
+                    power: val.power
+                }
+              } else {
+                combinedTs[key].power += val.power;
+              }
+            });
+          });
+          
+          combinedTs = _.values(combinedTs);
+          combinedTs = _.sortBy(combinedTs, 'time');
+          return combinedTs;
         },
         
         showCombined: function() {
           var self = this;
-          if(this.includedStops.length < 2) {
-            this.$('.combined').empty();
-          } else {
+
+          this.$('.combined').empty();
+          if(this.includedStops.length >= 2) {
             var routes = {};
             var addedstops = _.filter(this.stops, function(stop){
               return _.contains(self.includedStops, stop.id);
@@ -97,11 +123,15 @@ define([ 'jquery',
               elroutes: elroutes,
               routes: nonelroutes
             }));
+            
+            var ts = this._combineTimeseries(addedstops);
+            console.log(ts);
+            this.showPower(ts, 'combinedchart', 1500);
           }
         },
 
-        showPower: function(timeseries) {
-          var chart = amRef.makeChart('stop-powerchart', {
+        showPower: function(timeseries, chartid, max) {
+          amRef.makeChart(chartid, {
             'theme': 'none',
             'type': 'serial',
             'autoMargins': false,
@@ -117,8 +147,8 @@ define([ 'jquery',
               'inside': false,
               'min': 0,
               'minimum': 0,
-              'max': 1000,
-              'maximum': 1000,
+              'max': max,
+              'maximum': max,
               'gridAlpha': 0.1,
               'title': 'Power use (kW)'
             } ],
@@ -147,7 +177,7 @@ define([ 'jquery',
           });
         },
 
-        shoRoutes: function(stop) {
+        showRoutes: function(stop) {
 
           this.$('.stop-stats').html(RouteListTemplate({
             inroutes: stop.comingRoutes,

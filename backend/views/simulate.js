@@ -51,7 +51,7 @@ function getRoute(bus) {
 /**
  * 
  * @param {Number} power - power draw in kW
- * @param {Number} time - charging time
+ * @param {Number} time - charging time in minutes
  * @returns {Number} - energy consumed in kWh
  */
 function getEnergyDrawn(power, time) {
@@ -189,6 +189,12 @@ exports.list = function(req, res) {
         
         var sendResponseAndCloseDB = function() {
           res.type('application/json');
+//          
+//          var controlsum = 0;
+//          _.each(timeseries, function(val, key){
+//            controlsum += (val * 1/60);
+//          });
+          
           res.send({
             chargeEnergy : Math.round(chargeEnergy) + " kWh",
             prechargeEnergy : Math.round(prechargeEnergy) + " kWh",

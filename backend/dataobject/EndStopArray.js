@@ -216,17 +216,17 @@ EndStopArray.prototype.getProcessed = function() {
   _.each(this.endStops, function(stop, stopId) {
     if(stop.total > 1) {
       stop.total = Math.round(stop.total);
-      stop.timeseries = _.map(stop.timeseries, function(val, key) {
-        return {
+      var ts = {};
+      
+      _.each(stop.timeseries, function(val, key) {
+        ts[key] = {
           time: key,
           power: val.power,
           buses: val.buses
         };
       });
       
-      stop.timeseries = _.sortBy(stop.timeseries, function(point){
-        return parseInt(point.time, 10);
-      });
+      stop.timeseries = ts;
       
       retval[stop.id] = stop;
     }

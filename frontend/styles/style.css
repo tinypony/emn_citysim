@@ -140,7 +140,8 @@
 	display: inline-block;
 }
 
-#stop-buschart {
+#stop-buschart,
+#combinedchart:not(.empty) {
 	width: 100%;
 	height: 300px;
 	display: inline-block;
