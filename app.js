@@ -6,7 +6,7 @@ var models = require('./backend/models');
 var simulate = require('./backend/views/simulate');
 var routes = require('./backend/views/routes');
 var app = express();
-var bodyParse = require('body-parser');
+var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var errorhandler = require('errorhandler');
 
@@ -14,12 +14,12 @@ var errorhandler = require('errorhandler');
 app.set('port', process.env.PORT || 3000);
 
 app.set('view engine', 'jade');
-app.use(bodyParse.json());
+app.use(bodyParser.json());
 app.use(methodOverride());
 
 app.use('/', express.static(__dirname + '/frontend'));
 
-app.use('/api/simulate', simulate.list);
+app.post('/api/simulate', simulate.list);
 app.use('/api/routes', routes.routes);
 
 // development only

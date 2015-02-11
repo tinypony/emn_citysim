@@ -14,7 +14,8 @@ define([ 'jquery',
       this.simulationParams = {
           consumptionPerKm : 1,
           efficiency : 0.99,
-          maxLength : 15000 
+          maxLength : 15000 ,
+          routes: ['102', '102T']
       }
     },
     
@@ -25,14 +26,14 @@ define([ 'jquery',
     },
     
     postSimulate: function() {
-      self.$('.runbutton button').removeClass('disabled');
-      self.$('.statistics').show();
+      this.$('.runbutton button').removeClass('disabled');
+      this.$('.statistics').show();
     },
 
     runSimulation : function() {
       var self = this;
       this.preSimulate();
-      $.get('/api/simulate', self.simulationParams).done(function(data) {
+      $.post('/api/simulate', JSON.stringify(this.simulationParams)).done( function(data) {
         self.displayResults(data);
       });
     },

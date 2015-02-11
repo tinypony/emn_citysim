@@ -20,11 +20,11 @@ function kilometersTotal(buses) {
 }
 
 function getEnergyConsumptionPerKm(req) {
-  return req.query.consumptionPerKm ? parseFloat(req.query.consumptionPerKm, 10) : 1;
+  return req.body.consumptionPerKm ? parseFloat(req.body.consumptionPerKm, 10) : 1;
 }
 
 function getEfficiency(req) {
-  return req.query.efficiency ? parseFloat(req.query.efficiency, 10) : 1;
+  return req.body.efficiency ? parseFloat(req.body.efficiency, 10) : 1;
 }
 
 function getElectrificationPercentage(req) {
@@ -32,7 +32,7 @@ function getElectrificationPercentage(req) {
 }
 
 function getMaxLength(req) {
-  return req.query.maxLength ? req.query.maxLength : 15000; 
+  return req.body.maxLength ? req.body.maxLength : 15000; 
 }
 
 /**
@@ -160,9 +160,11 @@ exports.getEnergyDrawn = getEnergyDrawn;
 exports.list = function(req, res) {
   MongoClient.connect("mongodb://localhost:27017/hsl", function(err, db) {
     if (!err) {
+      console.log(req.body);
       
       db.collection('buses').find({
         dates : getDate(req),
+        route : req.body.routes,
         routeLength : { $lt : parseInt(getMaxLength(req), 10) }
       }).toArray(function(err, buses) {
 
@@ -190,10 +192,10 @@ exports.list = function(req, res) {
         var sendResponseAndCloseDB = function() {
           res.type('application/json');
 //          
-//          var controlsum = 0;
-//          _.each(timeseries, function(val, key){
-//            controlsum += (val * 1/60);
-//          });
+          var controlsum = 0;
+          _.each(timeseries, function(val, key){
+            controlsum += (val * 1/60);
+          });
           
           res.send({
             chargeEnergy : Math.round(chargeEnergy) + " kWh",
