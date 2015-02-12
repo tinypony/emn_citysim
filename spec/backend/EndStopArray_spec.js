@@ -216,8 +216,7 @@ describe('EndStopArray', function() {
     expect(ends.endStops.id3.total).toBe(100 / 60);
 
     var processed = ends.getProcessed();
-    expect(processed[0].timeseries[0].time).toBe('0030');
-    expect(processed[0].timeseries[0].power).toBe(100);
+    expect(processed[0].timeseries['0030'].power).toBe(100);
     expect(processed[0].total).toBe(Math.round(100 / 60));
   });
 });

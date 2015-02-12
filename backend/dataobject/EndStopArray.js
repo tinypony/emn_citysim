@@ -1,6 +1,6 @@
 var _ = require('underscore');
 var moment = require('moment');
-var MINIMUM_CHARGING_TIME = 5;
+var MINIMUM_CHARGING_TIME = 8;
 /**
  * Creates and maintains a map of all end stops for the provided routes
  * 
