@@ -31,7 +31,11 @@ MongoClient.connect('mongodb://127.0.0.1:27017/ruter', function(err, db) {
         if(result.length) {
           var group = result[0];
           console.log(group);
-          routes.update(route, {$set : {length: group.averageLength, totalLength: group.totalLength}}, {w:1}, function(){});
+          routes.update(route, {$set : {
+            length: group.averageLength, 
+            totalLength: group.totalLength,
+            frequencyRatio: group.totalLength/group.averageLength
+           }}, {w:1}, function(){});
         }
       });
     }
