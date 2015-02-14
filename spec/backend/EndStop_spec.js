@@ -9,10 +9,10 @@ describe('EndStop', function() {
 	});
 	
 	it('stores waiting bus', function() {
-		endStop.wait('102', '1', '0500');
-		endStop.wait('102', '2', '0510');
-		expect(endStop.waiting['102']['1']).toBe('0500');
-		expect(endStop.waiting['102']['2']).toBe('0510');
+		endStop.wait('102', 'id1', '0500');
+		endStop.wait('102', 'id2', '0510');
+		expect(endStop.waitingSince('102', 'id1')).toBe('0500');
+		expect(endStop.waitingSince('102', 'id2')).toBe('0510');
 	});
 	
 	it('detects when the same bus goes waiting again', function() {

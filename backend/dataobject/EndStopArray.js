@@ -1,6 +1,7 @@
 var _ = require('underscore');
 var moment = require('moment');
 var MINIMUM_CHARGING_TIME = 8;
+var EndStop = require('./EndStop').EndStop;
 /**
  * Creates and maintains a map of all end stops for the provided routes
  * 
@@ -31,7 +32,8 @@ var EndStopArray = function(buses) {
  */
 function getRoute(bus) {
   var fullRoute = bus.route;
-  return fullRoute.replace(/T|B|K|V/g, '');
+// return fullRoute.replace(/T|B|K|V/g, '');
+  return fullRoute;
 }
 
 function getDeparture(bus, isMoment) {
@@ -64,15 +66,15 @@ EndStopArray.prototype.getReverseDirection = function(bus) {
 EndStopArray.prototype.putEnds = function(bus, first, last) {
   var self = this;
 
-  if (!this.routeEnds[bus.route]) {
-    this.routeEnds[bus.route] = {
+  if (!this.routeEnds[getRoute(bus)]) {
+    this.routeEnds[getRoute(bus)] = {
       '0' : [],
       '1' : []
     };
   }
 
-  this.routeEnds[bus.route][this.getDirection(bus)][0] = _.first(bus.stops).id;
-  this.routeEnds[bus.route][this.getDirection(bus)][1] = _.last(bus.stops).id;
+  this.routeEnds[getRoute(bus)][this.getDirection(bus)][0] = _.first(bus.stops).id;
+  this.routeEnds[getRoute(bus)][this.getDirection(bus)][1] = _.last(bus.stops).id;
 
   this.put(first).put(last);
 }
@@ -90,14 +92,16 @@ EndStopArray.prototype.routeEnd = function(route, direction) {
  */
 EndStopArray.prototype.put = function(stop) {
   // Physical stop
-  var endStop = {
+  var endStop = new EndStop();
+  
+/*{
     id : stop.id,
     name : stop.name,
     total : 0,
     leavingRoutes : [],
     comingRoutes : [],
     timeseries : {}
-  };
+  };*/
 
   if (!this.endStops[stop.id]) {
     this.endStops[stop.id] = endStop;
@@ -106,34 +110,31 @@ EndStopArray.prototype.put = function(stop) {
   return this;
 }
 
-EndStopArray.prototype.getFirstEndStop = function(bus) {
-  var firstStop = _.first(bus.stops);
-  return this.endStops[firstStop.id];
+EndStopArray.prototype.getFirstEndStop = function(bus, reverseDirection) {
+  if(reverseDirection) {
+    return this.endStops[this.routeStart(getRoute(bus), this.getReverseDirection(bus))];
+  } else {
+    return this.endStops[this.routeStart(getRoute(bus), this.getDirection(bus))];
+  }
 }
 
-EndStopArray.prototype.getLastEndStop = function(bus, physical) {
-  var lastStop = _.last(bus.stops);
-  return this.endStops[lastStop.id];
+EndStopArray.prototype.getLastEndStop = function(bus, reverseDirection) {
+  if(reverseDirection) {
+    return this.endStops[this.routeEnd(getRoute(bus), this.getReverseDirection(bus))];
+  } else {
+    return this.endStops[this.routeEnd(getRoute(bus), this.getDirection(bus))];
+  }
 }
 
 EndStopArray.prototype.getReverseRouteEnds = function(bus) {
-  var ends = this.routeEnds[bus.route][this.getReverseDirection(bus)];
+  var ends = this.routeEnds[getRoute(bus)][this.getReverseDirection(bus)];
 
-  if (!ends.length) {
-    return this.routeEnds[bus.route][this.getDirection(bus)]; // fallback
-    // and
-    // assume
-    // the same
-    // stops
-    // (can
-    // occur
-    // when
-    // reverse
-    // route is
-    // longer
-    // than
-    // given
-    // threshold)
+  if (!ends) {
+    /*
+     * fallback and assume the same stops (can occur when reverse route is longer 
+     * that given threshold and has not been processed)
+     */
+    return this.routeEnds[getRoute(bus)][this.getDirection(bus)]; 
   }
 
   return ends;
@@ -149,64 +150,24 @@ EndStopArray.prototype.getReverseRouteEnds = function(bus) {
  */
 EndStopArray.prototype.waitingSince = function(bus) {
   var firstStop = this.getFirstEndStop(bus);
-  var lastStopId = this.getReverseRouteEnds(bus)[1];
-
-  var stop = this.endStops[lastStopId];
-
-  if (!stop) {
-    console.log(this.getReverseRouteEnds(bus));
-    console.log(bus.route);
-    console.log(firstStop);
-    console.log(this.routeEnds[bus.route]);
-  }
-
-  var route = getRoute(bus);
-  var departure = getDeparture(bus, true);
-  var retval;
-
-  var busQueue = stop[route];
-
-  if (busQueue && busQueue.length) {
-    var firstDepartureInQueue = _.min(busQueue, function(time) {
-      return parseInt(time, 10);
-    });
-
-    // Check if buses at the end stop are not from the future :)
-    if (departure.diff(moment(firstDepartureInQueue, 'HHmm'), 'minutes') >= MINIMUM_CHARGING_TIME) {
-      stop[route] = _.without(busQueue, firstDepartureInQueue);
-      retval = firstDepartureInQueue;
-    }
-  }
-
-  return retval;
+  return firstStop.waitingSince(getRoute(bus), bus.runtimeId);
 }
 
 EndStopArray.prototype.leave = function(bus) {
-  var firstStop = this.getFirstEndStop(bus, true);
-  if (!_.contains(firstStop.leavingRoutes, bus.route)) {
-    firstStop.leavingRoutes.push(bus.route);
-  }
+  var firstStop = this.getFirstEndStop(bus);
+  firstStop.leave(getRoute(bus), bus.runtimeId, getDeparture(bus));
 }
 
 /**
- * Mark bus as processed and let it wait at the last stop
+ * Mark bus as processed and let it wait at the first stop of the return trip
  * 
  * @param {Object}
  *            bus - object representing a single bus trip
  */
 EndStopArray.prototype.wait = function(bus) {
-  var endStop = this.getLastEndStop(bus, true);
+  var endStop = this.getFirstEndStop(bus, true);
   var route = getRoute(bus);
-
-  if (!_.contains(endStop.comingRoutes, bus.route)) {
-    endStop.comingRoutes.push(bus.route);
-  }
-
-  if (!endStop[route]) {
-    endStop[route] = [];
-  }
-
-  endStop[route].push(_.last(bus.stops).time);
+  endStop.wait(route, bus.runtimeId, _.last(bus.stops).time);
 }
 
 /**

@@ -6,11 +6,19 @@ function EndStop() {
 	this.waiting = {};
 }
 
+EndStop.prototype.waitingSince = function(route, busId) {
+  if(!this.waiting[route] || !this.waiting[route][busId]) {
+    return false;
+  } else {
+    return this.waiting[route][busId];
+  }  
+}
+
+
 EndStop.prototype.wait = function(route, busId, start) {
 	if (!this.waiting[route]) {
 		this.waiting[route] = {};
 	} else if (!_.isUndefined(this.waiting[route][busId])) {
-		this.waiting[route][busId] = start;
 		throw new Error('The same bus is already waiting');
 	}
 
@@ -27,7 +35,7 @@ EndStop.prototype.leave = function(route, busId, end) {
 	}
 	
 	//If the bus is leaving for the first time (just from a depot)
-	if (!this.waiting[route] || !this.waiting[route][busId]) {
+	if (!this.waitingSince(route, busId)) {
 		var firstEntry = {
 			until : end
 		}; 

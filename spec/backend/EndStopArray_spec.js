@@ -6,6 +6,7 @@ describe('EndStopArray', function() {
   beforeEach(function() {
     testBusA = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -21,6 +22,7 @@ describe('EndStopArray', function() {
 
     testBusB = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -38,21 +40,20 @@ describe('EndStopArray', function() {
   it('Correctly finds recently arrived bus when stops at both ends are different', function() {
     var ends = new EndStopArray([ testBusA, testBusB ]);
 
-    expect(ends.waitingSince(testBusA)).not.toBeDefined();
-
-    // Put arrived bus to the end stop of other direction
-    ends.endStops.id5['102'] = [ '1040' ];
-    expect(ends.waitingSince(testBusA)).toBe('1040');
-    expect(ends.endStops.id5['102'].length).toBe(0);
-
-    ends.endStops.id2['102'] = [ '1155' ];
+    expect(ends.waitingSince(testBusA)).toBeFalsy();
+    expect(ends.waitingSince(testBusB)).toBeFalsy();
+    
+    ends.wait(testBusA);
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    expect(ends.endStops.id2['102'].length).toBe(0);
+    
+    ends.wait(testBusB);
+    expect(ends.waitingSince(testBusA)).toBe('1300');
   });
 
   it('Correctly finds recently arrived bus when stops at one end are different', function() {
     var testBusA = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -68,6 +69,7 @@ describe('EndStopArray', function() {
 
     var testBusB = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -83,21 +85,20 @@ describe('EndStopArray', function() {
 
     var ends = new EndStopArray([ testBusA, testBusB ]);
 
-    expect(ends.waitingSince(testBusA)).not.toBeDefined();
+    expect(ends.waitingSince(testBusA)).toBeFalsy();
+    expect(ends.waitingSince(testBusB)).toBeFalsy();
 
-    // Put arrived bus to the end stop of other direction
-    ends.endStops.id3['102'] = [ '1040' ];
-    expect(ends.waitingSince(testBusA)).toBe('1040');
-    expect(ends.endStops.id3['102'].length).toBe(0);
-
-    ends.endStops.id2['102'] = [ '1155' ];
+    ends.wait(testBusA);
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    expect(ends.endStops.id2['102'].length).toBe(0);
+    
+    ends.wait(testBusB);
+    expect(ends.waitingSince(testBusA)).toBe('1300');
   });
 
   it('Correctly finds recently arrived bus when stops at both ends are the same', function() {
     var testBusA = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -113,6 +114,7 @@ describe('EndStopArray', function() {
 
     var testBusB = {
       route : '102',
+      runtimeId: 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -128,33 +130,17 @@ describe('EndStopArray', function() {
 
     var ends = new EndStopArray([ testBusA, testBusB ]);
 
-    expect(ends.waitingSince(testBusA)).not.toBeDefined();
-
-    // Put arrived bus to the end stop of other direction
-    ends.endStops.id1['102'] = [ '1040' ];
-    expect(ends.waitingSince(testBusA)).toBe('1040');
-    expect(ends.endStops.id1['102'].length).toBe(0);
-
-    ends.endStops.id2['102'] = [ '1155' ];
-    expect(ends.waitingSince(testBusB)).toBe('1155');
-    expect(ends.endStops.id2['102'].length).toBe(0);
-  });
-
-  it('correctly saves bus arrival at the last stop', function() {
-    var ends = new EndStopArray([ testBusA, testBusB ]);
+    expect(ends.waitingSince(testBusA)).toBeFalsy();
+    expect(ends.waitingSince(testBusB)).toBeFalsy();
 
     ends.wait(testBusA);
-    expect(ends.endStops.id2['102'].length).toBe(1);
-    expect(ends.endStops.id2['102'][0]).toBe('1155');
-
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    expect(ends.endStops.id2['102'].length).toBe(0);
-
+    
     ends.wait(testBusB);
-    expect(ends.waitingSince(testBusA)).not.toBeDefined();
+    expect(ends.waitingSince(testBusA)).toBe('1300');
   });
 
-  it('correctly tracks power consumption at the end stop', function() {
+  xit('correctly tracks power consumption at the end stop', function() {
 
     var ends = new EndStopArray([ testBusA, testBusB ]);
 
@@ -179,6 +165,5 @@ describe('EndStopArray', function() {
     expect(array.routeEnd('102', '0')).toBe('id2');
     expect(array.routeStart('102', '1')).toBe('id3');
     expect(array.routeEnd('102', '1')).toBe('id5');
-    
   });
 });
