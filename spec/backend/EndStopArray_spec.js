@@ -1,4 +1,4 @@
-var EndStopArray = require('../../backend/dataobject/EndStopArray').EndStopArray;
+var EndStopArray = require('../../backend/dataobject/EndStopArray');
 
 describe('EndStopArray', function() {
   var testBusA, testBusB;

@@ -1,4 +1,4 @@
-var EndStop = require('../../backend/dataobject/EndStop').EndStop;
+var EndStop = require('../../backend/dataobject/EndStop');
 
 describe('EndStop', function() {
 	

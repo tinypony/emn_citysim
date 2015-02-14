@@ -1,8 +1,8 @@
-var utils = require('../utils/utils').utils;
+var utils = require('../utils/utils');
 var _ = require('underscore');
 var MongoClient = require('mongodb').MongoClient;
 var moment = require('moment');
-var EndStopArray = require('../dataobject/EndStopArray').EndStopArray;
+var EndStopArray = require('../dataobject/EndStopArray');
 
 /**
  * REST end point for getting waiting times at the end stops

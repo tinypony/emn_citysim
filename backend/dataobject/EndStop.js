@@ -55,4 +55,4 @@ EndStop.prototype.leave = function(route, busId, end) {
 	}
 }
 
-exports.EndStop = EndStop;
+module.exports = EndStop;

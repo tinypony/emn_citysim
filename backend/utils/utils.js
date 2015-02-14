@@ -1,4 +1,4 @@
-exports.utils = {
+module.exports = {
 	getDate : function(req) {
 		return "2014-12-17";
 	},

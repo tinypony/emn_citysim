@@ -1,7 +1,7 @@
 var _ = require('underscore');
 var moment = require('moment');
 var MINIMUM_CHARGING_TIME = 8;
-var EndStop = require('./EndStop').EndStop;
+var EndStop = require('./EndStop');
 /**
  * Creates and maintains a map of all end stops for the provided routes
  * 
@@ -225,4 +225,4 @@ EndStopArray.prototype.getProcessed = function() {
   return retval;
 }
 
-exports.EndStopArray = EndStopArray;
+module.exports = EndStopArray;
