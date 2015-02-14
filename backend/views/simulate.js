@@ -9,6 +9,11 @@ function getDate(req) {
   return "2014-12-17";
 }
 
+
+function getMaxLength(req) {
+  return req.body.maxLength ? req.body.maxLength : 15000; 
+}
+
 function getTotalEnergy(buses, req) {
   return kilometersTotal(buses) * getEnergyConsumptionPerKm(req);
 }
@@ -29,10 +34,6 @@ function getEfficiency(req) {
 
 function getElectrificationPercentage(req) {
   return 0.5;
-}
-
-function getMaxLength(req) {
-  return req.body.maxLength ? req.body.maxLength : 15000; 
 }
 
 /**
