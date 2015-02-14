@@ -4,6 +4,7 @@ var express = require('express'),
 
 var models = require('./backend/models');
 var simulate = require('./backend/views/simulate');
+var waiting = require('./backend/views/waiting');
 var routes = require('./backend/views/routes');
 var app = express();
 var bodyParser = require('body-parser');
@@ -20,6 +21,7 @@ app.use(methodOverride());
 app.use('/', express.static(__dirname + '/frontend'));
 
 app.post('/api/simulate', simulate.list);
+app.get('/api/waitingtimes', waiting.waiting);
 app.use('/api/routes', routes.routes);
 
 // development only
