@@ -54,6 +54,7 @@ exports.waiting = function(req, res) {
           var busesNow = busLookUp[minuteStr];
 
           _.each(busesNow, function(busNow) {
+            busNow.runtimeId = ends.getRuntimeId(busNow, 5);
             ends.leave(busNow);
             ends.wait(busNow);
           });

@@ -161,9 +161,15 @@ describe('EndStopArray', function() {
 
   it('correctly places route ends', function() {
     var array = new EndStopArray([ testBusA, testBusB ]);
-    expect(array.routeStart('102', '0')).toBe('id1');
-    expect(array.routeEnd('102', '0')).toBe('id2');
-    expect(array.routeStart('102', '1')).toBe('id3');
-    expect(array.routeEnd('102', '1')).toBe('id5');
+    expect(array.routeStart(testBusA)).toBe('id1');
+    expect(array.routeEnd(testBusA)).toBe('id2');
+    expect(array.routeStart(testBusB)).toBe('id3');
+    expect(array.routeEnd(testBusB)).toBe('id5');
+  });
+  
+  it('determines end stops of excluded trip', function() {
+    var array = new EndStopArray([testBusA]);
+    expect(array.getReverseRouteEnds(testBusA)[0]).toBe('id2');
+    expect(array.getReverseRouteEnds(testBusA)[1]).toBe('id1');
   });
 });

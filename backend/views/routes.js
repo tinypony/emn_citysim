@@ -5,35 +5,52 @@ function getDate(req) {
   return "2014-12-17";
 }
 
-exports.routes = function(req, res) {
-  MongoClient.connect("mongodb://localhost:27017/hsl", function(err, db) {
-    var sendRoutes = function(routes) {
-      res.type('application/json');
-      res.send(_.sortBy(routes, 'routeLength'));
+function getMaxLength(req) {
+  return parseInt(req.query.maxLength);
+}
 
-      db.close();
+function validateRequest(req) {
+  if(!req.query.maxLength) {
+    return {
+      error: 'Maximum length must be defined',
+      parameters: ['maxLength'] 
     };
+  }
+}
+
+exports.routes = function(req, res) {
+  var reqVal = validateRequest(req);
+  if(reqVal) {
+    res.type('application/json');
+    res.status(422);
+    res.send(reqVal);
+  } else {
     
-    if (!err) {
-      db.collection('buses').aggregate([
-                                        {
-                                          $sort: {routeLength: -1}
-                                        },
-                                        {
-                                          $group: {
-                                            _id: '$serviceNbr',
-                                            route: {
-                                              $first: '$route'
-                                            },
-                                            routeLength: {
-                                              $first: '$routeLength'
-                                            }
-                                          }
-                                        }
-                                       ], function(err, buses){
-        sendRoutes(buses);
-      });
-      
-    }
-  });
+    MongoClient.connect("mongodb://localhost:27017/hsl", function(err, db) {
+      if (!err) {
+        db.collection('buses').aggregate([{
+          $match: { routeLength: { $lt: getMaxLength(req) } }
+        }, {
+          $sort: {
+            routeLength: -1
+          }
+        }, {
+          $group: {
+            _id: '$serviceNbr',
+            route: {
+              $first: '$route'
+            },
+            routeLength: {
+              $first: '$routeLength'
+            }
+          }
+        } ], function(err, buses) {
+          res.type('application/json');
+          res.send(_.sortBy(buses, 'routeLength'));
+          db.close();
+        });
+
+      }
+    });
+  }
 }

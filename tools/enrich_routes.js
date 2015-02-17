@@ -8,7 +8,6 @@ MongoClient.connect('mongodb://127.0.0.1:27017/ruter', function(err, db) {
     throw err;
   }
 
-  console.log("connected to the mongoDB !");
 
   var routes = db.collection('routes');
   var trips = db.collection('trips');

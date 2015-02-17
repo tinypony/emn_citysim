@@ -19,6 +19,8 @@ EndStop.prototype.wait = function(route, busId, start) {
 	if (!this.waiting[route]) {
 		this.waiting[route] = {};
 	} else if (!_.isUndefined(this.waiting[route][busId])) {
+    console.log(route + ':' + busId + ':' + start);
+    console.log(this.waiting[route]);
 		throw new Error('The same bus is already waiting');
 	}
 
@@ -43,9 +45,11 @@ EndStop.prototype.leave = function(route, busId, end) {
 		this.buses[route][busId].push(firstEntry);
 	} else {
 		var start = this.waiting[route][busId];
+		
 		if(moment(end, 'HHmm').diff(moment(start, 'HHmm'), 'minutes') < 0) {
 			throw new Error('Time order is incorrect');
 		}
+		
 		this.waiting[route] = _.omit(this.waiting[route], busId);
 		
 		this.buses[route][busId].push({

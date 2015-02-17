@@ -6,7 +6,7 @@ var EndStop = require('./EndStop');
  * Creates and maintains a map of all end stops for the provided routes
  * 
  * @param buses -
- *            all bus services on the specified day
+ *          all bus services on the specified day
  */
 var EndStopArray = function(buses) {
   var self = this;
@@ -27,12 +27,12 @@ var EndStopArray = function(buses) {
  * base routes and buses can switch between them at the end stops.
  * 
  * @param {Object}
- *            bus - a single bus service
+ *          bus - a single bus service
  * @returns
  */
 function getRoute(bus) {
   var fullRoute = bus.route;
-// return fullRoute.replace(/T|B|K|V/g, '');
+  // return fullRoute.replace(/T|B|K|V/g, '');
   return fullRoute;
 }
 
@@ -68,23 +68,32 @@ EndStopArray.prototype.putEnds = function(bus, first, last) {
 
   if (!this.routeEnds[getRoute(bus)]) {
     this.routeEnds[getRoute(bus)] = {
-      '0' : [],
-      '1' : []
+      '0': [],
+      '1': []
     };
   }
 
-  this.routeEnds[getRoute(bus)][this.getDirection(bus)][0] = _.first(bus.stops).id;
-  this.routeEnds[getRoute(bus)][this.getDirection(bus)][1] = _.last(bus.stops).id;
+  var routeDirection = this.routeEnds[getRoute(bus)][this.getDirection(bus)];
+  if (!routeDirection.length) {
+    routeDirection.push(_.first(bus.stops).id);
+    routeDirection.push(_.last(bus.stops).id);
+  }
 
   this.put(first).put(last);
 }
 
-EndStopArray.prototype.routeStart = function(route, direction) {
-  return this.routeEnds[route][direction][0];
+EndStopArray.prototype.routeStart = function(trip, reverseDirection) {
+  if (reverseDirection) {
+    return this.getReverseRouteEnds(trip)[0];
+  }
+  return this.routeEnds[getRoute(trip)][this.getDirection(trip)][0];
 }
 
-EndStopArray.prototype.routeEnd = function(route, direction) {
-  return this.routeEnds[route][direction][1];
+EndStopArray.prototype.routeEnd = function(trip, reverseDirection) {
+  if (reverseDirection) {
+    return this.getReverseRouteEnds(trip)[1];
+  }
+  return this.routeEnds[getRoute(trip)][this.getDirection(trip)][1];
 }
 
 /**
@@ -93,16 +102,6 @@ EndStopArray.prototype.routeEnd = function(route, direction) {
 EndStopArray.prototype.put = function(stop) {
   // Physical stop
   var endStop = new EndStop();
-  
-/*{
-    id : stop.id,
-    name : stop.name,
-    total : 0,
-    leavingRoutes : [],
-    comingRoutes : [],
-    timeseries : {}
-  };*/
-
   if (!this.endStops[stop.id]) {
     this.endStops[stop.id] = endStop;
   }
@@ -111,30 +110,29 @@ EndStopArray.prototype.put = function(stop) {
 }
 
 EndStopArray.prototype.getFirstEndStop = function(bus, reverseDirection) {
-  if(reverseDirection) {
-    return this.endStops[this.routeStart(getRoute(bus), this.getReverseDirection(bus))];
-  } else {
-    return this.endStops[this.routeStart(getRoute(bus), this.getDirection(bus))];
-  }
+  return this.endStops[this.routeStart(bus, reverseDirection)];
 }
 
-EndStopArray.prototype.getLastEndStop = function(bus, reverseDirection) {
-  if(reverseDirection) {
-    return this.endStops[this.routeEnd(getRoute(bus), this.getReverseDirection(bus))];
-  } else {
-    return this.endStops[this.routeEnd(getRoute(bus), this.getDirection(bus))];
-  }
-}
+//EndStopArray.prototype.getLastEndStop = function(bus, reverseDirection) {
+//  if (reverseDirection) {
+//    return this.endStops[this.routeEnd(getRoute(bus), this.getReverseDirection(bus))];
+//  } else {
+//    return this.endStops[this.routeEnd(getRoute(bus), this.getDirection(bus))];
+//  }
+//}
 
 EndStopArray.prototype.getReverseRouteEnds = function(bus) {
   var ends = this.routeEnds[getRoute(bus)][this.getReverseDirection(bus)];
 
-  if (!ends) {
+  if (!ends.length) {
     /*
-     * fallback and assume the same stops (can occur when reverse route is longer 
-     * that given threshold and has not been processed)
+     * fallback and assume the same stops (can occur when reverse route is
+     * longer that given threshold and has not been processed)
      */
-    return this.routeEnds[getRoute(bus)][this.getDirection(bus)]; 
+    var reversedArr = [];
+    reversedArr.push(this.routeEnds[getRoute(bus)][this.getDirection(bus)][1]);
+    reversedArr.push(this.routeEnds[getRoute(bus)][this.getDirection(bus)][0]);
+    return reversedArr;
   }
 
   return ends;
@@ -144,7 +142,7 @@ EndStopArray.prototype.getReverseRouteEnds = function(bus) {
  * Tells if a bus of certain route is already waiting at its end stop
  * 
  * @param {Object}
- *            bus - object representing a single bus trip
+ *          bus - object representing a single bus trip
  * @returns {String} - string representation of the time a bus of the same route
  *          arrived at that end stop or undefined if no buses arrived yet
  */
@@ -158,16 +156,45 @@ EndStopArray.prototype.leave = function(bus) {
   firstStop.leave(getRoute(bus), bus.runtimeId, getDeparture(bus));
 }
 
+EndStopArray.prototype.getRuntimeId = function(bus, minWaitingTime) {
+  var firstStopWaitingList = this.getFirstEndStop(bus).waiting[getRoute(bus)];
+
+  waitingArray = _.map(firstStopWaitingList, function(time, waitingId) {
+    return {
+      runtimeId: waitingId,
+      time: time
+    };
+  });
+
+  waitingArray = _.sortBy(waitingArray, function(elem) {
+    return moment(elem.time, 'HHmm').format('X');
+  });
+
+  var retval;
+  var tmpVal = _.find(waitingArray, function(elem) {
+    var departure = getDeparture(bus, true);
+    var waitingSince = moment(elem.time, 'HHmm');
+    return departure.diff(waitingSince, 'minutes') > minWaitingTime;
+  });
+
+  if (!tmpVal) {
+    retval = _.uniqueId('bus_');
+  } else {
+    retval = tmpVal.runtimeId;
+  }
+  
+  return retval;
+}
+
 /**
  * Mark bus as processed and let it wait at the first stop of the return trip
  * 
  * @param {Object}
- *            bus - object representing a single bus trip
+ *          bus - object representing a single bus trip
  */
 EndStopArray.prototype.wait = function(bus) {
   var endStop = this.getFirstEndStop(bus, true);
-  var route = getRoute(bus);
-  endStop.wait(route, bus.runtimeId, _.last(bus.stops).time);
+  endStop.wait(getRoute(bus), bus.runtimeId, _.last(bus.stops).time);
 }
 
 /**
@@ -178,8 +205,8 @@ EndStopArray.prototype.chargeBus = function(bus, power, timeStr) {
   var firstStop = this.getFirstEndStop(bus, true);
   if (!firstStop.timeseries[timeStr]) {
     firstStop.timeseries[timeStr] = {
-      power : 0,
-      buses : 0
+      power: 0,
+      buses: 0
     };
   }
 
@@ -200,9 +227,9 @@ EndStopArray.prototype.getProcessed = function() {
 
       _.each(stop.timeseries, function(val, key) {
         ts[key] = {
-          time : key,
-          power : val.power,
-          buses : val.buses
+          time: key,
+          power: val.power,
+          buses: val.buses
         };
       });
 

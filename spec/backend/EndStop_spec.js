@@ -18,8 +18,17 @@ describe('EndStop', function() {
 	it('detects when the same bus goes waiting again', function() {
 		endStop.wait('102', '1', '0500');
 		expect(function(){
-			endStop.wait('102', '1', '0500');
+			endStop.wait('102', '1', '0530');
 		}).toThrow(new Error('The same bus is already waiting'));
+	});
+	
+	it('does not complain if the bus comes back again after leaving', function() {
+	  endStop.wait('102', '1', '0500');
+	  endStop.leave('102', '1', '0510');
+	  
+    expect(function() {
+      endStop.wait('102', '1', '0530');
+    }).not.toThrow(new Error('The same bus is already waiting'));
 	});
 	
 	it('detects when the same bus leaves before it started waiting', function() {
