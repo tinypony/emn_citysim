@@ -40,7 +40,9 @@ exports.waiting = function(req, res) {
           res.type('application/json');
 
           res.send({
-            endStops : ends.endStops
+            endStops : _.omit(ends.endStops, function(val, key, object) {
+              return !_.keys(val.buses).length;
+            })
           });
 
           db.close();

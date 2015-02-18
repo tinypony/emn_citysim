@@ -2,14 +2,16 @@ define(['jquery',
         'backbone', 
         'views/local-sim',
         'views/remote-sim',
-        'views/countdown'], 
-        function($, Backbone, LocalSimulation, RemoteSimulation, Countdown){
+        'views/endstop-viz',
+        'views/route-select'], 
+        function($, Backbone, LocalSimulation, RemoteSimulation, EndStopView, RouteSelectionView){
   
   var EMNRouter = Backbone.Router.extend({
     routes: {
       'localsim': 'localSim',
       'remotesim': 'remoteSim',
-      'suds': 'suds'
+      'routes': 'routes',
+      'routeselect': 'routeSelect'
     },
     
     init: function() {
@@ -22,21 +24,25 @@ define(['jquery',
 
     localSim: function() {
       this.init();
-      
       this.view = new LocalSimulation({el: $('body > .view-content')});
       this.view.render();
     },
     
     remoteSim: function() {
       this.init();
-      
       this.view = new RemoteSimulation({el: $('body > .view-content')});
       this.view.render();
     },
-
-    suds: function() {
+    
+    routes: function() {
       this.init();
-      this.view = new Countdown({el: $('body > .view-content')});
+      this.view = new EndStopView({el: $('body > .view-content')});
+     // this.view.render();
+    },
+    
+    routes: function() {
+      this.init();
+      this.view = new RouteSelectionView({el: $('body > .view-content')});
       this.view.render();
     }
   });

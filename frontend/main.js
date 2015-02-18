@@ -13,14 +13,15 @@ require.config({
     backbone: 'lib/backbone/backbone',
     hbs: 'lib/hbs',
     Handlebars: 'lib/hbs/handlebars',
-    moment: 'lib/moment.min'
+    moment: 'lib/moment.min',
+    d3: 'lib/d3.min',
+    router: 'router'
   },
 
   shim : {
     'jquery-ui' : {
       deps : [ 'jquery' ],
       exports : '$'
-        
     },
 
     'amcharts.funnel' : {
@@ -80,6 +81,5 @@ require.config({
 });
 
 require([ 'backbone', 'router', 'jquery-ui' ], function(Backbone, router) {
-  
   Backbone.history.start(); 
 });

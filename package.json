@@ -1,23 +1,13 @@
 {
-  "name": "emn_citysim",
-  "version": "0.0.1",
-  "description": "Citywide electric bus simulation",
-  "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "engines": {
+    "node": ">= 0.10.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/tinypony/emn_citysim.git"
-  },
-  "author": "Artur Latypov",
-  "license": "BSD-2-Clause",
-  "bugs": {
-    "url": "https://github.com/tinypony/emn_citysim/issues"
-  },
-  "dependencies": {
-    "express": "~4.11.0",
-    "mongoose": "~3.8.21",
-    "underscore": "~1.7.0"
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-contrib-nodeunit": "~0.4.1",
+    "grunt-contrib-concat": "~0.4.0",
+    "grunt-contrib-uglify": "~0.5.0"
   }
 }

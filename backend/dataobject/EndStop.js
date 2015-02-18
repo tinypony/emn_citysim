@@ -1,7 +1,9 @@
 var _ = require('underscore');
 var moment = require('moment');
 
-function EndStop() {
+function EndStop(details) {
+  this.id = details.id;
+  this.name = details.name;
 	this.buses = {};
 	this.waiting = {};
 }
@@ -14,13 +16,12 @@ EndStop.prototype.waitingSince = function(route, busId) {
   }  
 }
 
-
 EndStop.prototype.wait = function(route, busId, start) {
 	if (!this.waiting[route]) {
 		this.waiting[route] = {};
 	} else if (!_.isUndefined(this.waiting[route][busId])) {
-    console.log(route + ':' + busId + ':' + start);
-    console.log(this.waiting[route]);
+//    console.log(route + ':' + busId + ':' + start);
+//    console.log(this.waiting[route]);
 		throw new Error('The same bus is already waiting');
 	}
 

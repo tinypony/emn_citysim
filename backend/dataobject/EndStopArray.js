@@ -2,6 +2,7 @@ var _ = require('underscore');
 var moment = require('moment');
 var MINIMUM_CHARGING_TIME = 8;
 var EndStop = require('./EndStop');
+
 /**
  * Creates and maintains a map of all end stops for the provided routes
  * 
@@ -68,8 +69,8 @@ EndStopArray.prototype.putEnds = function(bus, first, last) {
 
   if (!this.routeEnds[getRoute(bus)]) {
     this.routeEnds[getRoute(bus)] = {
-      '0': [],
-      '1': []
+      '0' : [],
+      '1' : []
     };
   }
 
@@ -101,7 +102,7 @@ EndStopArray.prototype.routeEnd = function(trip, reverseDirection) {
  */
 EndStopArray.prototype.put = function(stop) {
   // Physical stop
-  var endStop = new EndStop();
+  var endStop = new EndStop(stop);
   if (!this.endStops[stop.id]) {
     this.endStops[stop.id] = endStop;
   }
@@ -112,14 +113,6 @@ EndStopArray.prototype.put = function(stop) {
 EndStopArray.prototype.getFirstEndStop = function(bus, reverseDirection) {
   return this.endStops[this.routeStart(bus, reverseDirection)];
 }
-
-//EndStopArray.prototype.getLastEndStop = function(bus, reverseDirection) {
-//  if (reverseDirection) {
-//    return this.endStops[this.routeEnd(getRoute(bus), this.getReverseDirection(bus))];
-//  } else {
-//    return this.endStops[this.routeEnd(getRoute(bus), this.getDirection(bus))];
-//  }
-//}
 
 EndStopArray.prototype.getReverseRouteEnds = function(bus) {
   var ends = this.routeEnds[getRoute(bus)][this.getReverseDirection(bus)];
@@ -161,8 +154,8 @@ EndStopArray.prototype.getRuntimeId = function(bus, minWaitingTime) {
 
   waitingArray = _.map(firstStopWaitingList, function(time, waitingId) {
     return {
-      runtimeId: waitingId,
-      time: time
+      runtimeId : waitingId,
+      time : time
     };
   });
 
@@ -182,7 +175,7 @@ EndStopArray.prototype.getRuntimeId = function(bus, minWaitingTime) {
   } else {
     retval = tmpVal.runtimeId;
   }
-  
+
   return retval;
 }
 
@@ -205,8 +198,8 @@ EndStopArray.prototype.chargeBus = function(bus, power, timeStr) {
   var firstStop = this.getFirstEndStop(bus, true);
   if (!firstStop.timeseries[timeStr]) {
     firstStop.timeseries[timeStr] = {
-      power: 0,
-      buses: 0
+      power : 0,
+      buses : 0
     };
   }
 
@@ -227,9 +220,9 @@ EndStopArray.prototype.getProcessed = function() {
 
       _.each(stop.timeseries, function(val, key) {
         ts[key] = {
-          time: key,
-          power: val.power,
-          buses: val.buses
+          time : key,
+          power : val.power,
+          buses : val.buses
         };
       });
 
@@ -243,11 +236,6 @@ EndStopArray.prototype.getProcessed = function() {
   retval = _.sortBy(retval, function(stop) {
     return -stop.total;
   });
-
-  // drop stops that have consumption below threshold
-  // retval = _.filter(retval, function(stop) {
-  // return stop.total > 1;
-  // });
 
   return retval;
 }
