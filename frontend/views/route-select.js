@@ -1,22 +1,21 @@
 define([ 'jquery', 
          'underscore', 
-         'backbone', 
-         'router', 
+         'backbone',
          'hbs!templates/route-select' ], 
-    function($, _, Backbone, Router, template) {
+    function($, _, Backbone, template) {
 
   var SelectionView = Backbone.View.extend({
     events: {
-      'click .submit': 'onSubmit' 
+      'click .submit': 'onSelect' 
     },
     
     initialize: function() {
-      _.bindAll(this, ['onSubmit']);
+     // _.bindAll(this, ['onSubmit']);
     },
     
-    onSubmit: function() {
-      this.$el.empty();
-      
+    onSelect: function(ev) {
+      ev.preventDefault();
+      Backbone.history.navigate('overview');
     },
     
     render: function() {

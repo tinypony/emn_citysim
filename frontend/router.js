@@ -3,15 +3,18 @@ define(['jquery',
         'views/local-sim',
         'views/remote-sim',
         'views/endstop-viz',
-        'views/route-select'], 
-        function($, Backbone, LocalSimulation, RemoteSimulation, EndStopView, RouteSelectionView){
+        'views/route-select',
+        'views/routes-overview'], 
+        function($, Backbone, LocalSimulation, RemoteSimulation, 
+            EndStopView, RouteSelectionView, RoutesOverview){
   
   var EMNRouter = Backbone.Router.extend({
     routes: {
       'localsim': 'localSim',
       'remotesim': 'remoteSim',
-      'routes': 'routes',
-      'routeselect': 'routeSelect'
+      'routesviz': 'routesVizualization',
+      'select': 'routeSelect',
+      'overview': 'routesOverview'
     },
     
     init: function() {
@@ -34,17 +37,24 @@ define(['jquery',
       this.view.render();
     },
     
-    routes: function() {
+    routesVisualization: function() {
       this.init();
       this.view = new EndStopView({el: $('body > .view-content')});
      // this.view.render();
     },
     
-    routes: function() {
+    routeSelect: function() {
       this.init();
       this.view = new RouteSelectionView({el: $('body > .view-content')});
       this.view.render();
+    },
+    
+    routesOverview: function() {
+      this.init();
+      this.view = new RoutesOverview({el: $('body > .view-content')});
+      this.view.render();
     }
+    
   });
   
   return new EMNRouter();

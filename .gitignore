@@ -26,3 +26,7 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
+
+#API access token storage
+frontend/api-config.js
+
