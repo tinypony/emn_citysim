@@ -114,6 +114,7 @@ define([ 'jquery',
       
       this.$('#accordion2').collapse();
       this.endStopDetails = new EndStopDetails({el: this.$('.endstop-details')});
+      this.endStopDetails.render();
       this.showMap();
       this.displayData(this.getRoutes());
     },

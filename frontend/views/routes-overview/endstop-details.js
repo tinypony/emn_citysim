@@ -21,10 +21,10 @@ define([ 'jquery',
         'theme' : 'none',
         'type' : 'serial',
         'autoMargins' : false,
-        'marginLeft' : 100,
+        'marginLeft' : 70,
         'marginRight' : 8,
-        'marginTop' : 10,
-        'marginBottom' : 70,
+        'marginTop' : 50,
+        'marginBottom' : 60,
         'pathToImages' : 'http://www.amcharts.com/lib/3/images/',
         'dataProvider' : this.data,
         'valueAxes' : [ {
@@ -61,6 +61,8 @@ define([ 'jquery',
           'title' : 'Time'
         }
       });
+      
+      this.$('#power-chart > div > div > a').remove();
     },
     
     hide: function() {
@@ -69,6 +71,7 @@ define([ 'jquery',
     
     render: function() {
       this.$el.html(template());
+      this.hide();
     }
     
   });

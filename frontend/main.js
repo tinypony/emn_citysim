@@ -89,6 +89,6 @@ require.config({
   }
 });
 
-require([ 'backbone', 'router', 'jquery-ui' ], function(Backbone, router) {
+require([ 'backbone', 'router', 'jquery-ui', 'moment' ], function(Backbone, router, JUI, moment) {
   Backbone.history.start();
 });
