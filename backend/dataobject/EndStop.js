@@ -8,6 +8,36 @@ function EndStop(details) {
 	this.waiting = {};
 }
 
+EndStop.prototype.itemize = function() {
+ return {
+   id: this.id,
+   name: this.name,
+   buses: _.map(this.buses, function(routeBuses, route) {
+     return {
+       route: route,
+       vehicles: _.map(routeBuses, function(intervals, busId){
+         return {
+           busId: busId,
+           waitingTimes: intervals
+         };
+       })
+     };
+   }),
+   
+   waiting: _.map(this.waiting, function(routeBuses, route){
+     return {
+       route: route,
+       vehicles: _.map(routeBuses, function(time, busId){
+         return {
+           busId: busId,
+           time: time
+         };
+       })
+     };
+   })
+ } ;
+}
+
 EndStop.prototype.waitingSince = function(route, busId) {
   if(!this.waiting[route] || !this.waiting[route][busId]) {
     return false;
@@ -20,8 +50,6 @@ EndStop.prototype.wait = function(route, busId, start) {
 	if (!this.waiting[route]) {
 		this.waiting[route] = {};
 	} else if (!_.isUndefined(this.waiting[route][busId])) {
-//    console.log(route + ':' + busId + ':' + start);
-//    console.log(this.waiting[route]);
 		throw new Error('The same bus is already waiting');
 	}
 
@@ -40,7 +68,9 @@ EndStop.prototype.leave = function(route, busId, end) {
 	//If the bus is leaving for the first time (just from a depot)
 	if (!this.waitingSince(route, busId)) {
 		var firstEntry = {
-			until : end
+		  from  : moment(end, 'HHmm').subtract(30, 'minutes').format('HHmm'),
+			until : end,
+			first : true
 		}; 
 		
 		this.buses[route][busId].push(firstEntry);

@@ -187,7 +187,29 @@ EndStopArray.prototype.getRuntimeId = function(bus, minWaitingTime) {
  */
 EndStopArray.prototype.wait = function(bus) {
   var endStop = this.getFirstEndStop(bus, true);
-  endStop.wait(getRoute(bus), bus.runtimeId, _.last(bus.stops).time);
+  
+  var dayFlip = function(trip) {
+    var start = moment(_.first(trip.stops).time, 'HHmm');
+    var end = moment(_.last(trip.stops).time, 'HHmm');
+    //console.log('start '+start.format('HHmm')+', end '+end.format('HHmm') + ', diff: '+);
+    return end.diff(start, 'minutes') < 0;
+  };
+  
+  if(dayFlip(bus)) {
+    var flippedHours = 24; 
+    var flippedMinutes = 0;
+    
+    var end = moment(_.last(bus.stops).time, 'HHmm');
+    flippedHours += end.hours();
+    flippedMinutes += end.minutes();
+    if(flippedMinutes < 10) {
+      flippedMinutes = '0'+flippedMinutes;
+    }
+    console.log(''+flippedHours+''+flippedMinutes);
+    endStop.wait(getRoute(bus), bus.runtimeId, ''+flippedHours+''+flippedMinutes);
+  } else {
+    endStop.wait(getRoute(bus), bus.runtimeId, _.last(bus.stops).time);
+  }
 }
 
 /**
@@ -208,6 +230,12 @@ EndStopArray.prototype.chargeBus = function(bus, power, timeStr) {
   firstStop.total += power * (1 / 60); // resolution is one minute, so the
   // energy will be (P * 1/60) kWh
 }
+
+EndStopArray.prototype.itemize = function() {
+  return _.map(this.endStops, function(stop, stopId){
+    return stop.itemize();
+  });
+};
 
 EndStopArray.prototype.getProcessed = function() {
   // Flatten families

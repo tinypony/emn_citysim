@@ -1,34 +1,35 @@
 <div class="overview-screen">
-<div class="side-list">
-	<div class="accordion" id="accordion2">
-	  
-	{{#each routes}}
-	  <div class="accordion-group">
-	    <div class="accordion-heading">
-	      <a class="accordion-toggle collapsed" data-route="{{this.name}}" data-toggle="collapse" data-parent="#accordion2" href="#collapse{{this.name}}">
-	        {{this.name}}
-	      </a>
-	    </div>
-	    <div id="collapse{{this.name}}" class="accordion-body collapse">
-	      <div class="accordion-inner">
-	        <div class="row"> 
-	        	<div class="col-md-6">
-	        		<label class="property-name">Length</label>
-	        		<label class="property-value">{{this.length}} meters</label>
-	        	</div>
-	        	<div class="col-md-6">
-	        		<label class="property-name">CO2 reduction</label>
-	        		<label class="property-value">42 tonns</label>
-	        	</div>
-	        </div>
-	      </div>
-	    </div>
-	  </div>
- 	{{/each}}
+	<div class="side-list nano">
+	
+			<div class="accordion" id="accordion2">
+
+				{{#each routes}}
+				<div class="accordion-group">
+					<div class="accordion-heading">
+						<a class="accordion-toggle collapsed" data-route="{{this.name}}"
+							data-toggle="collapse" data-parent="#accordion2"
+							href="#collapse{{this.name}}"> {{this.name}} </a>
+					</div>
+					<div id="collapse{{this.name}}" class="accordion-body collapse">
+						<div class="accordion-inner">
+							<div class="row">
+								<div class="col-md-6">
+									<label class="property-name">Length</label> <label
+										class="property-value">{{this.length}} meters</label>
+								</div>
+								<div class="col-md-6">
+									<label class="property-name">CO2 reduction</label> <label
+										class="property-value">42 tonns</label>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				{{/each}}
+			</div>
 	</div>
-</div>
-<div class="details-view">
-	<div id="map" class="map-view"></div>
-	<div class="endstop-details"></div>
-</div>
+	<div class="details-view">
+		<div id="map" class="map-view"></div>
+		<div class="endstop-details"></div>
+	</div>
 </div>

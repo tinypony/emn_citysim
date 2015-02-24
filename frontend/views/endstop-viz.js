@@ -16,7 +16,7 @@ define(['jquery', 'underscore', 'backbone', 'views/endstopviz/endstop'],
       var self = this;
       var $div = $('<div class="endstop-list">');
       
-      _.each(data.endStops, function(val, key) {
+      _.each(data.endStops, function(val, idx) {
         var newView = new EndStopView({data: val});
         $div.append(newView.render().$el);
       });

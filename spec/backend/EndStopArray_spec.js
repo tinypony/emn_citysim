@@ -6,7 +6,7 @@ describe('EndStopArray', function() {
   beforeEach(function() {
     testBusA = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -22,7 +22,7 @@ describe('EndStopArray', function() {
 
     testBusB = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -42,10 +42,10 @@ describe('EndStopArray', function() {
 
     expect(ends.waitingSince(testBusA)).toBeFalsy();
     expect(ends.waitingSince(testBusB)).toBeFalsy();
-    
+
     ends.wait(testBusA);
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    
+
     ends.wait(testBusB);
     expect(ends.waitingSince(testBusA)).toBe('1300');
   });
@@ -53,7 +53,7 @@ describe('EndStopArray', function() {
   it('Correctly finds recently arrived bus when stops at one end are different', function() {
     var testBusA = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -69,7 +69,7 @@ describe('EndStopArray', function() {
 
     var testBusB = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -90,7 +90,7 @@ describe('EndStopArray', function() {
 
     ends.wait(testBusA);
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    
+
     ends.wait(testBusB);
     expect(ends.waitingSince(testBusA)).toBe('1300');
   });
@@ -98,7 +98,7 @@ describe('EndStopArray', function() {
   it('Correctly finds recently arrived bus when stops at both ends are the same', function() {
     var testBusA = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 1',
       direction : '0',
       stops : [ {
@@ -114,7 +114,7 @@ describe('EndStopArray', function() {
 
     var testBusB = {
       route : '102',
-      runtimeId: 'bus1',
+      runtimeId : 'bus1',
       serviceNbr : '102 2',
       direction : '1',
       stops : [ {
@@ -135,7 +135,7 @@ describe('EndStopArray', function() {
 
     ends.wait(testBusA);
     expect(ends.waitingSince(testBusB)).toBe('1155');
-    
+
     ends.wait(testBusB);
     expect(ends.waitingSince(testBusA)).toBe('1300');
   });
@@ -166,10 +166,44 @@ describe('EndStopArray', function() {
     expect(array.routeStart(testBusB)).toBe('id3');
     expect(array.routeEnd(testBusB)).toBe('id5');
   });
-  
+
   it('determines end stops of excluded trip', function() {
-    var array = new EndStopArray([testBusA]);
+    var array = new EndStopArray([ testBusA ]);
     expect(array.getReverseRouteEnds(testBusA)[0]).toBe('id2');
     expect(array.getReverseRouteEnds(testBusA)[1]).toBe('id1');
+  });
+
+  it('tests route 21', function() {
+    var buses21 = [ {
+      "direction" : "1",
+      "route" : "21",
+      "serviceNbr" : "3205-21",
+      "stops" : [ {
+        "id" : "3010090",
+        "order" : 1,
+        "time" : "0536",
+        "name" : "Bryggetorget"
+      }, {
+        "id" : "3011441",
+        "order" : 2,
+        "time" : "0603",
+        "name" : "Helsfyr T"
+      } ]
+    }, {
+      "direction" : "1",
+      "route" : "21",
+      "serviceNbr" : "3205-21",
+      "stops" : [ {
+        "id" : "3010090",
+        "order" : 1,
+        "time" : "0551",
+        "name" : "Bryggetorget"
+      }, {
+        "id" : "3011441",
+        "order" : 2,
+        "time" : "0618",
+        "name" : "Helsfyr T"
+      } ]
+    } ];
   });
 });

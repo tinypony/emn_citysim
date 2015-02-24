@@ -5,7 +5,7 @@ describe('EndStop', function() {
 	var endStop;
 	
 	beforeEach(function(){
-		endStop = new EndStop();
+		endStop = new EndStop({id: '1'});
 	});
 	
 	it('stores waiting bus', function() {

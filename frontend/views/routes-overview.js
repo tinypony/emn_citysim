@@ -3,11 +3,14 @@ define([ 'jquery',
          'backbone', 
          'mapbox', 
          'mocks',
+         'scroller',
          'api-config', 
          'bootstrap',
          'views/routes-overview/endstop-details',
-         'hbs!templates/routes-overview' ], 
-         function($, _, Backbone, Mapbox, Mocks, ApiConfig, bootstrap, EndStopDetails, template) {
+         'hbs!templates/routes-overview',
+         'hbs!templates/routes-overview/endstop-popup'], 
+         function($, _, Backbone, Mapbox, Mocks, scroller,
+             ApiConfig, bootstrap, EndStopDetails, template, endstopPopupTemplate) {
 
   var RoutesOverview = Backbone.View.extend({
     events: {
@@ -17,11 +20,28 @@ define([ 'jquery',
     
     initialize : function(optimize) {
       this.drawnRoutes = {};
+      var self = this;
+      $.get('/api/routes').done(function(data){
+        self.data = data;
+        self.render();
+      });
     },
 
     getRoutes : function() {
-      return Mocks.routes;
+      
+      return _.filter(this.data, function(route){
+        var stop = _.find(route.stats, function(stat){
+          return stat.date === '2015-2-19';
+        });
+        
+        if(!stop) {
+          return false;
+        } else {
+          return stop.frequencyRatio > 100;
+        }
+      });
     },
+    
     
     onMouseout: function(ev) {
       $target = $(ev.currentTarget);
@@ -32,9 +52,9 @@ define([ 'jquery',
     highlightRoute: function(routeName, isHighlighted) {
       var style;
       if(isHighlighted) {
-        style = { color: 'steelblue' };
+        style = { color: 'steelblue', opacity: 1 };
       } else {
-        style = { color: 'grey' };
+        style = { color: 'grey', opacity: 0.5 };
       }
       this.drawnRoutes[routeName].setStyle(style);
     },
@@ -51,9 +71,17 @@ define([ 'jquery',
       var self = this;
       
       var createMarker = function(stop) {
+        var routesWithEndStop = _.filter(self.getRoutes(), function(route){
+          return _.first(route.stops).id === stop.id || _.last(route.stops).id === stop.id;
+        });
+        
         var marker = L.marker([stop.posY, stop.posX]);
+        marker.bindPopup(endstopPopupTemplate({
+          stopname: stop.name,
+          routes: routesWithEndStop
+        }));
         marker.addTo(self.map);
-        endStops[stop.id] = marker; 
+        endStops[stop.id] = marker;
         
         marker.on('click', function(e) {
           self.map.panTo(e.latlng);
@@ -61,19 +89,17 @@ define([ 'jquery',
           self.endStopDetails.show();
         });
         
-        marker.on('mouseover', function(e){
-          var routesWithEndStop = _.filter(self.getRoutes(), function(route){
-            return _.first(route.stops).id === stop.id || _.last(route.stops).id === stop.id;
-          });
-          
+        marker.on('mouseover', function(e) {
           _.each(routesWithEndStop, function(routeFound) {
             self.highlightRoute(routeFound.name, true);
-          });
+          });          
           
+          e.target.openPopup();
         });
         
         marker.on('mouseout', function(e) {
           self.unhighlightAllRoutes();
+          e.target.closePopup();
         });
       };
       
@@ -120,7 +146,6 @@ define([ 'jquery',
     },
 
     showMap : function() {
-      console.log(ApiConfig.tokens.mapbox);
       L.mapbox.accessToken = ApiConfig.tokens.mapbox;
       this.map = L.mapbox.map('map', 'tinypony.l8cdckm5').setView([ 59.914, 10.748 ], 12);
     }
