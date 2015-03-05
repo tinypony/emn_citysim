@@ -6,148 +6,164 @@ define([ 'jquery',
          'scroller',
          'api-config', 
          'bootstrap',
+         'chroma',
          'views/routes-overview/endstop-details',
+         'views/routes-overview/map-view',
          'hbs!templates/routes-overview',
-         'hbs!templates/routes-overview/endstop-popup'], 
+         'hbs!templates/routes-overview/route-list'], 
          function($, _, Backbone, Mapbox, Mocks, scroller,
-             ApiConfig, bootstrap, EndStopDetails, template, endstopPopupTemplate) {
+             ApiConfig, bootstrap, chroma, EndStopDetails, MapView, template, routeListTemplate) {
 
-  var RoutesOverview = Backbone.View.extend({
+  
+  var RouteList = Backbone.View.extend({
+    
     events: {
-      'mouseover .accordion-toggle': 'displayRoute',
+      'mouseover .accordion-toggle': 'onMouseover',
       'mouseout .accordion-toggle': 'onMouseout'
     },
     
-    initialize : function(optimize) {
-      this.drawnRoutes = {};
-      var self = this;
-      $.get('/api/routes').done(function(data){
-        self.data = data;
-        self.render();
-      });
+    initialize: function(options){
+      this.data = options.data;
     },
-
-    getRoutes : function() {
-      
-      return _.filter(this.data, function(route){
-        var stop = _.find(route.stats, function(stat){
-          return stat.date === '2015-2-19';
-        });
-        
-        if(!stop) {
-          return false;
-        } else {
-          return stop.frequencyRatio > 100;
-        }
-      });
-    },
-    
     
     onMouseout: function(ev) {
       $target = $(ev.currentTarget);
       var routeName = $target.attr('data-route');
-      this.highlightRoute(routeName, false);
+      this.trigger('route:highlight', routeName, false);
     },
-    
-    highlightRoute: function(routeName, isHighlighted) {
-      var style;
-      if(isHighlighted) {
-        style = { color: 'steelblue', opacity: 1 };
-      } else {
-        style = { color: 'grey', opacity: 0.5 };
-      }
-      this.drawnRoutes[routeName].setStyle(style);
-    },
-    
-    unhighlightAllRoutes: function() {
-      var self = this;
-      _.each(_.keys(this.drawnRoutes), function(routeName){
-        self.highlightRoute(routeName, false);
-      })
-    },
-    
-    displayData: function(routes) {
-      var endStops = {};
-      var self = this;
-      
-      var createMarker = function(stop) {
-        var routesWithEndStop = _.filter(self.getRoutes(), function(route){
-          return _.first(route.stops).id === stop.id || _.last(route.stops).id === stop.id;
-        });
-        
-        var marker = L.marker([stop.posY, stop.posX]);
-        marker.bindPopup(endstopPopupTemplate({
-          stopname: stop.name,
-          routes: routesWithEndStop
-        }));
-        marker.addTo(self.map);
-        endStops[stop.id] = marker;
-        
-        marker.on('click', function(e) {
-          self.map.panTo(e.latlng);
-          self.endStopDetails.setData(Mocks.getEndStopData());
-          self.endStopDetails.show();
-        });
-        
-        marker.on('mouseover', function(e) {
-          _.each(routesWithEndStop, function(routeFound) {
-            self.highlightRoute(routeFound.name, true);
-          });          
-          
-          e.target.openPopup();
-        });
-        
-        marker.on('mouseout', function(e) {
-          self.unhighlightAllRoutes();
-          e.target.closePopup();
-        });
-      };
-      
-      var drawRoute = function( route, fitToMap ) {        
-        var polyline = L.polyline( _.map(route.stops, function(stop){
-          return L.latLng(stop.posY, stop.posX);
-        }), {color: 'grey'}).addTo(self.map);
 
-        self.drawnRoutes[route.name] = polyline;
-      }
+    
+    onMouseover: function(ev) {
+      $target = $(ev.currentTarget);
+      var routeName = $target.attr('data-route');
+      this.trigger('route:highlight', routeName, true);
+    },
+    
+    render: function() {
+      this.$el.html(routeListTemplate({
+        routes: _.sortBy(this.data.routes, function(route){
+          return -route.dayStats.rank;
+        })
+        
+      }));
+      var self = this;
       
-      _.each(routes, function(route) {
-        var first = _.first(route.stops);
-        var last = _.last(route.stops);
+      this.$('#accordion2').collapse();
+      
+      _.defer(function() {
+        self.$('.nano').nanoScroller({flash: true});
         
-        drawRoute(route);
+        self.$('.accordion-group').on('show.bs.collapse', function(ev) {
+          var $tar = $(ev.currentTarget);
+          $tar.toggleClass('toggle-on');
+        });
         
-        if(_.isUndefined(endStops[first.id])) {
-          createMarker(first);
-        }
+        self.$('.accordion-group').on('hide.bs.collapse', function(ev) {
+          var $tar = $(ev.currentTarget);
+          $tar.toggleClass('toggle-on');
+        });
+      });
+      
+      return this;
+    }
+  });
+  
+  var RoutesOverview = Backbone.View.extend({
+    defaultDate: '2015-2-22',
+    
+    initialize : function(optimize) {
+      _.bindAll(this, ['displayData']);
+      this.date = this.defaultDate;
+      this.retrieveData(true);
+    },
+    
+    retrieveData: function( isFirst) {
+      var self = this;
+      
+      $.get('/api/routes?date='+this.date).done(function(data){
+        self.routeData = data;
         
-        if(_.isUndefined(endStops[last.id])) {
-          createMarker(last);
+        if(isFirst) {
+          self.render();
+        } else {
+          self.displayData(self.routeData);
         }
       });
     },
     
-    displayRoute: function(ev) {
-      $target = $(ev.currentTarget);
-      var routeName = $target.attr('data-route');
-      this.highlightRoute(routeName, true);
+    getDate: function() {
+      return this.date;
+    },
+
+    
+    getStat: function(route, date) {
+      var routeObj;
+      var routes = this.routeData.routes;
+      
+      if(_.isString(route)) {
+        routeObj = _.find(routes, function(item){
+          return item.name === route;
+        });
+      } else {
+        routeObj = route;
+      }
+      
+      return routeObj.dayStats;
+    },
+    
+    displayData: function(data) {
+      var self = this;
+      if(this.listView){
+        this.stopListening(this.listView);
+        this.listView.remove();
+      }
+      
+      var reduction = _.reduce(data.routes, function(memo, route){
+        return memo + route.dayStats.co2 + route.dayStats.nox;
+      }, 0);
+      
+      var cost = data.routes.length * 2000000;
+      
+      this.$('.top-level-results .emission-reduction').text('Emission reduction: '+Math.round(reduction) + 'kg/day');
+      this.$('.top-level-results .infrastructure-cost').text('Infrastrucutre cost: '+ cost + ' EUR');
+      
+      this.mapView.displayData(data.routes, data.rankDomain);      
+      
+      this.listView = new RouteList({data: data});     
+      this.$('.side-list').append(this.listView.render().$el);
+      this.listenTo(this.listView, 'route:highlight', function(routeName, isHighlighted){
+        self.mapView.highlightRoute(routeName, isHighlighted);
+      });
+      
     },
 
     render : function() {
-      this.$el.html(template({
-        routes : this.getRoutes()
-      }));
+      var self = this;      
+      this.$el.html(template());
       
-      this.$('#accordion2').collapse();
+//      this.$('#inputDate').datepicker({
+//        minDate: new Date('2015-02-09'),
+//        maxDate: new Date('2015-02-22'),
+//        defaultDate: new Date('2015-02-17'),
+//        onSelect: function() {
+//          var dateObj = self.$('#inputDate').datepicker('getDate');
+//          self.date = $.datepicker.formatDate('yy-m-d', dateObj);
+//          self.retrieveData();
+//        }
+//      });
+      
+      this.mapView = new MapView({el: this.$('#map')});
+      this.mapView.render();
+      this.listenTo(this.mapView, 'show:endstop', function(stopId){
+        self.endStopDetails.setData(Mocks.getEndStopData());
+        self.endStopDetails.show();
+      });
+      
+
       this.endStopDetails = new EndStopDetails({el: this.$('.endstop-details')});
       this.endStopDetails.render();
-      this.showMap();
-      this.displayData(this.getRoutes());
-    },
-
-    showMap : function() {
-      L.mapbox.accessToken = ApiConfig.tokens.mapbox;
-      this.map = L.mapbox.map('map', 'tinypony.l8cdckm5').setView([ 59.914, 10.748 ], 12);
+      
+      this.displayData(this.routeData);
     }
 
   });

@@ -11,8 +11,9 @@ require.config({
     'amcharts.serial' : 'lib/amcharts/serial',
     'amcharts.xy' : 'lib/amcharts/xy',
     backbone : 'lib/backbone/backbone',
+    chroma: 'lib/chroma.min',
     hbs : 'lib/hbs',
-    scroller: 'lib/jquery.mCustomScrollbar.min',
+    scroller: 'lib/jquery.nanoscroller.min',
     Handlebars : 'lib/hbs/handlebars',
     moment : 'lib/moment.min',
     d3 : 'lib/d3.min',
@@ -96,8 +97,5 @@ require.config({
 });
 
 require([ 'backbone', 'router', 'jquery-ui', 'moment' ], function(Backbone, router, JUI, moment) {
-  router.on('route:routesOverview', function(){
-    console.log('tram');
-  });
   Backbone.history.start();
 });

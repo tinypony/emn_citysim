@@ -31,48 +31,6 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
       return this;
     },
 
-    drawHtml : function() {
-      var self = this;
-      var routes = _.keys(this.endstopData.buses);
-      var buses = _.keys(this.endstopData.buses[routes[0]]);
-      var oneBus = this.endstopData.buses[routes[0]][buses[0]];
-      var width = self.$('.timeline').width();
-      var minsInDay = 1440;
-      this.$('.timeline').height(100);
-
-      var getIntervalWidth = function(totalWidth, interval) {
-        return (interval * totalWidth) / minsInDay;
-      }
-
-      var drawInterval = function(interval) {
-        var intervalWidth = getIntervalWidth(width, moment(interval.until, 'HHmm').diff(moment(interval.from, 'HHmm'), 'minutes'));
-        var offset = getIntervalWidth(width, moment(interval.from, 'HHmm').diff(moment('0000', 'HHmm'), 'minutes'));
-
-        var bar = $('<div class="interval html-interval" style="width:' + intervalWidth + '; left:' + offset + ';">');
-        bar.attr('data-start', interval.from);
-        bar.attr('data-end', interval.until);
-        self.$('.timeline').append(bar);
-      }
-
-      var drawStart = function(start) {
-        var hoffset = getIntervalWidth(width, moment(start.until, 'HHmm').diff(moment('0000', 'HHmm'), 'minutes')) - 3;
-        var voffset = -2;
-        var circle = $('<div class="start html-interval" style="left:' + hoffset + '; top: ' + voffset + ';">');
-        circle.attr('data-leave', start.until);
-        self.$('.timeline').append(circle);
-      }
-
-      _.each(oneBus, function(interval) {
-
-        if (!interval.from) {
-          drawStart(interval);
-        } else {
-          drawInterval(interval);
-        }
-
-      });
-    },
-
     drawSvg : function() {
       var margin = {
         top : 20,
@@ -109,9 +67,13 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
       var height =  routeStatsHeight(this.endstopData.buses.length-1);
 
       var timeline = d3.select(this.$('.timeline')[0]);
-      var svg = timeline.append('svg').attr('width', width).attr('height', height);
+      var svg = timeline.append('svg').attr('width', width).attr('height', height + 40);
       var x = d3.scale.linear().domain([ 0, minsInDay ]).range([ 0, width - timelineoffset ]);
-
+      
+      var formatTime = d3.time.format("%H:%M"),
+      formatMinutes = function(d) { return formatTime(new Date(2012, 0, 1, 0, d)); };
+      var xAxis = d3.svg.axis().scale(x).orient('bottom').ticks(12).tickFormat(formatMinutes);
+      
 
       var appendRouteLabel = function(selectedRoute, routeIdx, arr) {
         var routeLabel = svg.append('g').attr('transform', function() {
@@ -151,6 +113,7 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
       };
 
       _.each(this.endstopData.buses, visualizeRoute);
+      svg.append('g').attr('transform', 'translate('+ timelineoffset +',' + (height)+ ')').attr('class', 'x-axis').call(xAxis);
     }
   });
 

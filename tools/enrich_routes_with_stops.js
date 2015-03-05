@@ -21,7 +21,7 @@ MongoClient.connect('mongodb://127.0.0.1:27017/ruter', function(err, db) {
       if (route) {
           
         trips.findOne({
-          route: route.name
+          serviceNbr: route.id
         }, function(err, result) {
           
           if (!err) {
@@ -40,11 +40,12 @@ MongoClient.connect('mongodb://127.0.0.1:27017/ruter', function(err, db) {
               }
             }, {
               w : 1
-            }, function() {});
+            }, function() {
+              i++;
+              console.log('done '+i+'/'+count);
+              end();
+            });
           }
-          i++;
-          console.log('done '+i+'/'+count);
-          end();
         });
       }
     });

@@ -1,0 +1,31 @@
+<div class="nano">
+<div class="accordion nano-content" id="accordion2">
+
+	{{#each routes}}
+	<div class="accordion-group">
+		<div class="accordion-heading">
+			<a class="accordion-toggle collapsed" data-route="{{this.name}}"
+				data-toggle="collapse" data-parent="#accordion2"
+				data-target="#collapse{{this.name}}"> {{this.name}} </a>
+		</div>
+		<div id="collapse{{this.name}}" class="accordion-body collapse">
+			<div class="accordion-inner">
+				<div class="row">
+					<div class="col-md-8">
+						<label class="property-name">Length</label> 
+						<label class="property-value">{{this.dayStats.length}} m</label>
+					</div>
+				</div>
+				<h5>Emission reduction</h5>				
+				<ul class="emissions">
+					<li><label class="emission-type">CO/day </label><label class="emission-value">{{this.dayStats.co2}} kg</label></li>
+					<li><label class="emission-type">NOx/day </label><label class="emission-value">{{this.dayStats.nox}} kg</label></li>
+				</ul>
+
+					
+			</div>
+		</div>
+	</div>
+	{{/each}}
+</div>
+</div>

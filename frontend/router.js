@@ -59,10 +59,10 @@ define(['jquery',
     routesOverview: function() {
       this.init();
       this.view = new RoutesOverview({el: $('body > .view-content')});
-      this.view.render();
     }
     
   });
   
-  return new EMNRouter();
+  var router = new EMNRouter();
+  return router;
 });

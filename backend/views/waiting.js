@@ -31,7 +31,7 @@ function getMinWaitingTime(tripLength) {
  * REST end point for getting waiting times at the end stops
  */
 exports.waiting = function(req, res) {
-  var date = '2015-2-10';
+  var date = '2015-2-22';
   MongoClient.connect("mongodb://localhost:27017/ruter", function(err, db) {
     if(!err) {
       var query = {
@@ -43,7 +43,7 @@ exports.waiting = function(req, res) {
             $elemMatch: {
               date: date,
               length: {
-                $lt: 18000
+                $lt: 20000
               }
             }
           }

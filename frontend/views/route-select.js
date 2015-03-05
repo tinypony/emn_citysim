@@ -1,8 +1,9 @@
 define([ 'jquery', 
          'underscore', 
          'backbone',
+         'router',
          'hbs!templates/route-select' ], 
-    function($, _, Backbone, template) {
+    function($, _, Backbone, router, template) {
 
   var SelectionView = Backbone.View.extend({
     events: {
@@ -15,7 +16,8 @@ define([ 'jquery',
     
     onSelect: function(ev) {
       ev.preventDefault();
-      Backbone.history.navigate('overview');
+      console.log(router);
+      Backbone.history.navigate('overview', true);
     },
     
     render: function() {

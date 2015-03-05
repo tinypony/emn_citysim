@@ -6,6 +6,10 @@ define([ 'jquery',
          function($, _, Backbone, amRef, template) {
   var EndStop = Backbone.View.extend({
     
+    events: {
+      'click .close-ear' : 'hide'
+    },
+    
     initialize: function(options){
       
     },
@@ -63,6 +67,9 @@ define([ 'jquery',
       });
       
       this.$('#power-chart > div > div > a').remove();
+      this.$('.high-consumption').text(Math.round(_.max(this.data, function(datapoint){
+        return datapoint.power;
+      }).power) + ' kW');
     },
     
     hide: function() {
@@ -70,7 +77,7 @@ define([ 'jquery',
     },
     
     render: function() {
-      this.$el.html(template());
+      this.$el.html(template({}));
       this.hide();
     }
     
