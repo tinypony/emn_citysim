@@ -69,7 +69,7 @@ define([ 'jquery',
   });
   
   var RoutesOverview = Backbone.View.extend({
-    defaultDate: '2015-2-22',
+    defaultDate: '2015-2-18',
     
     initialize : function(optimize) {
       _.bindAll(this, ['displayData']);
@@ -119,7 +119,7 @@ define([ 'jquery',
       }
       
       var reduction = _.reduce(data.routes, function(memo, route){
-        return memo + route.dayStats.co2 + route.dayStats.nox;
+        return memo + route.dayStats.co2 + route.dayStats.nox + route.dayStats.co;
       }, 0);
       
       var cost = data.routes.length * 2000000;
@@ -131,6 +131,7 @@ define([ 'jquery',
       
       this.listView = new RouteList({data: data});     
       this.$('.side-list').append(this.listView.render().$el);
+      
       this.listenTo(this.listView, 'route:highlight', function(routeName, isHighlighted){
         self.mapView.highlightRoute(routeName, isHighlighted);
       });

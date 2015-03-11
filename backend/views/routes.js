@@ -9,7 +9,7 @@ function getDate(req) {
 }
 
 function getMaxLength(req) {
-  return parseInt(req.query.maxLength);
+  return req.query.maxLength ? parseInt(req.query.maxLength) : 20000;
 }
 
 function validateRequest(req) {
@@ -55,7 +55,7 @@ exports.routes = function(req, res) {
             $elemMatch: {
               date: date,
               length: {
-                $lt: 20000
+                $lt: getMaxLength(req)
               }
             }
         };
@@ -92,11 +92,15 @@ exports.routes = function(req, res) {
               stats.rank = rankModel.rank(stats);
               stats.length = Math.round(stats.length);
               var coEmissionGPerKm = 6;
-              var nox;
+              var noxEmissionGPerKm = 3;
+              var co2EmissionGPerKm = 1330;
            //  http://www2.vtt.fi/inf/pdf/tiedotteet/2007/T2373.pdf
               //http://www.embarq.org/sites/default/files/Exhaust-Emissions-Transit-Buses-EMBARQ.pdf
-              stats.co2 = Math.round((stats.totalLength / 1000) * 6) / 1000; //kilogram per km
-              stats.nox = Math.round((stats.totalLength / 1000) * 3) / 1000; //kilogram per km
+              //https://www.google.fi/url?sa=t&rct=j&q=&esrc=s&source=web&cd=5&cad=rja&uact=8&ved=0CDsQFjAE&url=http%3A%2F%2Fwww.researchgate.net%2Fprofile%2FChristopher_Koroneos%2Fpublication%2F262193381_Comparative_environmental_assessment_of_Athens_urban_busesDiesel_CNG_and_biofuel_powered%2Flinks%2F0deec53b17a7cf2680000000.pdf&ei=pUn4VJGnI8b_ywPEoIKQDg&usg=AFQjCNEMzSKvhrJE6KkapaImHX9JZso6cA&sig2=Qg3BQ3SCqIiNdkurSfAwnw&bvm=bv.87519884,d.bGQ
+              var kms = stats.totalLength / 1000;
+              stats.co = Math.round( kms * coEmissionGPerKm) / 1000; //kilogram per km
+              stats.nox = Math.round( kms * noxEmissionGPerKm) / 1000; //kilogram per km
+              stats.co2 = Math.round( kms * co2EmissionGPerKm) / 1000;
               return stats;
             }
             

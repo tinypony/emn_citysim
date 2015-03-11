@@ -5,6 +5,14 @@ var moment = require('moment');
 var EndStopArray = require('../dataobject/EndStopArray');
 var minChargingTime = 10;
 
+function getDate(req) {
+  console.log('date:'+req.query.date);
+  return req.query.date ? req.query.date : '2015-2-22';
+}
+function getMaxLength(req) {
+  return req.query.maxLength ? parseInt(req.query.maxLength) : 20000;
+}
+
 function getLut(trips) {
   var busLookUp = {};
 //Place all buses into a map, use departure as a key
@@ -23,15 +31,17 @@ function getLut(trips) {
 function getMinWaitingTime(tripLength) {
   if(tripLength < 3000) {
     return 0;
+  } else if(tripLength < 5000) {
+    return 4;
   } else {
-    return 10;
+    return 9;
   }
 }
 /**
  * REST end point for getting waiting times at the end stops
  */
 exports.waiting = function(req, res) {
-  var date = '2015-2-22';
+  var date = getDate(req);
   MongoClient.connect("mongodb://localhost:27017/ruter", function(err, db) {
     if(!err) {
       var query = {
@@ -43,7 +53,7 @@ exports.waiting = function(req, res) {
             $elemMatch: {
               date: date,
               length: {
-                $lt: 20000
+                $lt: getMaxLength(req)
               }
             }
           }
@@ -53,7 +63,7 @@ exports.waiting = function(req, res) {
        var routeNames = _.pluck(routes, 'name');
        
        db.collection('trips').find({
-         dates : '2015-2-10',
+         dates : date,
          route : {$in: routeNames}
        }).toArray(function(err, trips) {
          

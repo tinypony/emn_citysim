@@ -1,7 +1,16 @@
-define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/endstopviz/endstopdetails' ], function($, _, Backbone, d3, moment, template) {
+define([ 'jquery', 
+         'underscore', 
+         'amcharts.radar', 
+         'backbone',
+         'd3',
+         'moment', 
+         'hbs!templates/endstopviz/endstopdetails' ], 
+    function($, _, amRef, Backbone,  d3, moment, template) {
   var EndStopDetails = Backbone.View.extend({
+   
     initialize : function(options) {
       this.endstopData = options.data;
+      this.routes = options.routes;
     },
 
     getBusesTotal : function(routeName) {
@@ -24,11 +33,59 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
 
       var self = this;
       _.defer(function() {
-        // self.drawHtml();
         self.drawSvg();
       })
 
       return this;
+    },
+    
+
+    drawWebChart : function(routeName) {
+      var routeStats = _.find(this.routes, function(route) {
+        return route.name === routeName;
+      });
+      
+      var routeTimes = _.find(this.endstopData.buses, function(stop){
+        return stop.route == routeName;
+      });
+      
+      var id = _.uniqueId('webchart_');
+      this.$('.web-chart').empty().append($('<div id="' + id + '"></div>'));
+
+      var minWaits = _.map(routeTimes.vehicles, function(vehicle){
+        var waitingTimes = _.map(vehicle.waitingTimes, function(time){
+          var fromMoment = moment(time.from, 'HHmm');
+          var untilMoment = moment(time.until, 'HHmm');
+          var waitingTime = untilMoment.diff(fromMoment, 'minutes');
+          if(waitingTime < 0) {
+            return 24 * 60 + waitingTime; //over midnight flip
+            
+          }else {
+            return waitingTime;
+          }
+        });
+        
+        return _.min(waitingTimes);
+      });
+      
+      var minWait = _.min(minWaits);
+
+      var dataProvider = [ {
+        variable : 'Length',
+        value : routeStats.dayStats.length
+      }, {
+        variable : 'Departures',
+        value : routeStats.dayStats.frequencyRatio
+      }, {
+        variable : 'Charger power (1kWh/km consumption)',
+        value : ((routeStats.dayStats.length) * 1) / (minWait * 60)
+      }, {
+        variable : 'Charger power (2kWh/km consumption)',
+        value : ((routeStats.dayStats.length) * 2) / (minWait * 60)
+      },{
+        variable : 'Charger power (3kWh/km consumption)',
+        value : ((routeStats.dayStats.length) * 3) / (minWait * 60)
+      }];      
     },
 
     drawSvg : function() {
@@ -37,6 +94,18 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
         right : 20,
         bottom : 30,
         left : 50
+      };
+      
+      var routeStatsOffset = function(routeIdx) {
+        if (routeIdx === 0) {
+          return 0;
+        } else {
+          return routeStatsOffset(routeIdx-1) + routeHeight(routeIdx - 1);
+        }
+      };
+      
+      var routeHeight = function(routeIdx) {
+        return self.endstopData.buses[routeIdx].vehicles.length * busTimelineHeight + routeoffset;
       };
       
       //Calculates height of all timelines including specified route
@@ -59,9 +128,9 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
       
       var self = this;
       var timelineoffset = 40;
-      var routeoffset = 5;
+      var routeoffset = 35; // space between timeseries that belong to different routes
       var minsInDay = 1440;
-      var lineHeight = 4;
+      var lineHeight = 3;
       var width = this.$('.timeline').width();
       var busTimelineHeight = 15;
       var height =  routeStatsHeight(this.endstopData.buses.length-1);
@@ -76,6 +145,7 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
       
 
       var appendRouteLabel = function(selectedRoute, routeIdx, arr) {
+        
         var routeLabel = svg.append('g').attr('transform', function() {
           if (routeIdx === 0) {
             return 'translate(30, 0)';
@@ -84,10 +154,12 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
           }
         });
 
+        //Vertical bar
         routeLabel.append('rect')
           .attr('width', 3)
           .attr('height', busTimelineHeight * selectedRoute.vehicles.length);
 
+        //Route name label
         routeLabel.append('text')
         .attr('x', -30)
         .attr('y', 15).text(selectedRoute.route);
@@ -95,11 +167,28 @@ define([ 'jquery', 'underscore', 'backbone', 'd3', 'moment', 'hbs!templates/ends
 
       var visualizeRoute = function(selectedRoute, routeIdx, arr) {
         appendRouteLabel(selectedRoute, routeIdx, arr);
+        var routeTimelinesContainer = svg.append('g')
+                                      .attr('class', 'route-timelines')
+                                      .attr('transform', 'translate('+ timelineoffset +','+ routeStatsOffset(routeIdx) +')');
+        
+        routeTimelinesContainer.on('click', function() {
+        //  self.drawWebChart(selectedRoute.route);
+          console.log(_.find(self.routes, function(route) {
+            return route.name === selectedRoute.route;
+          }));
+        });
+                                      
+        
+        var routeBackground = routeTimelinesContainer.append('rect')
+                              .attr('class', 'route-background')
+                              .attr('height', routeHeight(routeIdx) - routeoffset)
+                              .attr('width', width - timelineoffset);
         
         _.each(selectedRoute.vehicles, function(vehicle, idx) {
 
-          var graphic = svg.append('g').attr('transform', function(d) {
-            return 'translate(' + timelineoffset + ',' + timelineOffset(idx, routeIdx) + ')';
+          //bus timeline
+          var graphic = routeTimelinesContainer.append('g').attr('transform', function(d) {
+            return 'translate(0,' + timelineOffset(idx, 0) + ')';
           });
 
           var busTimeline = graphic.selectAll('g').data(vehicle.waitingTimes).enter().append('g');
